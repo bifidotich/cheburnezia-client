@@ -24,6 +24,9 @@ ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 ANDROID_BUILD_DIR="${ROOT_DIR}/deploy/build/client/android-build"
 cd "${ROOT_DIR}"
 
+# Fork branding: overrides the CLIENT_* cache variables from client/cmake/branding/.
+export CMAKE_EXTRA_ARGS="${CMAKE_EXTRA_ARGS:--C ${ROOT_DIR}/branding/cheburnezia.cmake}"
+
 command -v go >/dev/null || { echo "go is required to build libdnstt.so" >&2; exit 1; }
 
 echo "=== 1. Building C++ core, libdnstt.so and Qt resources ==="

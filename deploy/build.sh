@@ -211,6 +211,10 @@ args=()
 [[ -n "$QT_ANDROID_BUILD_ALL_ABIS" ]] && args+=("-DQT_ANDROID_BUILD_ALL_ABIS=$QT_ANDROID_BUILD_ALL_ABIS")
 [[ -n "$BUILD_PLAY" ]]                && args+=("-DANDROID_BUILD_PLAY=ON")
 
+# Escape hatch for fork-specific configure flags (e.g. -C branding/*.cmake).
+# shellcheck disable=SC2206
+[[ -n "$CMAKE_EXTRA_ARGS" ]]          && args+=($CMAKE_EXTRA_ARGS)
+
 if [[ -n "$FORCE" ]]; then
     run_traced rm -rf "$BUILD_PATH"
 fi
