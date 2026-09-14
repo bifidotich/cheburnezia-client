@@ -1,8 +1,11 @@
 #ifndef DNSTTCONFIGMODEL_H
 #define DNSTTCONFIGMODEL_H
 
+#include <QJsonObject>
 #include <QObject>
 #include <QString>
+
+#include "core/utils/containerEnum.h"
 #include "core/models/protocols/dnsttProtocolConfig.h"
 
 class DnsttConfigModel : public QObject
@@ -15,6 +18,8 @@ class DnsttConfigModel : public QObject
     Q_PROPERTY(int calculatedMtu READ calculatedMtu NOTIFY calculatedMtuChanged)
     Q_PROPERTY(bool isMtuValid READ isMtuValid NOTIFY isMtuValidChanged)
     Q_PROPERTY(bool isPublicKeyValid READ isPublicKeyValid NOTIFY isPublicKeyValidChanged)
+    Q_PROPERTY(bool isResolversValid READ isResolversValid NOTIFY isResolversValidChanged)
+    Q_PROPERTY(QString resolversError READ resolversError NOTIFY isResolversValidChanged)
     Q_PROPERTY(bool needsBootstrap READ needsBootstrap NOTIFY needsBootstrapChanged)
     Q_PROPERTY(bool isValid READ isValid NOTIFY isValidChanged)
 
@@ -36,11 +41,24 @@ public:
     int calculatedMtu() const;
     bool isMtuValid() const;
     bool isPublicKeyValid() const;
+    bool isResolversValid() const;
+    QString resolversError() const;
     bool needsBootstrap() const;
     bool isValid() const;
 
     Q_INVOKABLE QString getValidationError() const;
     Q_INVOKABLE QString generateUri() const;
+
+public slots:
+    // Loads the stored container config so the settings page shows the values
+    // the tunnel is actually running with. The container argument is unused,
+    // but keeps the signature uniform with the other protocol config models so
+    // InstallUiController can drive them all the same way.
+    void updateModel(amnezia::DockerContainer container, const amnezia::DnsttProtocolConfig &protocolConfig);
+    void updateModel(const QJsonObject &config);
+
+    amnezia::DnsttProtocolConfig getProtocolConfig() const;
+    QJsonObject getConfig() const;
 
 signals:
     void domainChanged();
@@ -50,6 +68,7 @@ signals:
     void calculatedMtuChanged();
     void isMtuValidChanged();
     void isPublicKeyValidChanged();
+    void isResolversValidChanged();
     void needsBootstrapChanged();
     void isValidChanged();
 

@@ -23,6 +23,11 @@ namespace amnezia
         int calculateMtu() const;
         bool isValid(QString *error = nullptr) const;
 
+        // Validates the comma-separated resolvers list against the grammar
+        // libdnstt's buildTransport() accepts. Exposed so the UI can flag a
+        // malformed entry while it is being typed.
+        static bool areResolversValid(const QString &resolvers, QString *error = nullptr);
+
         // Wire format handed to the Android layer as dnstt_config_data.
         // Keys are snake_case to match DnsttNative/Dnstt.kt.
         QJsonObject toClientJson() const;

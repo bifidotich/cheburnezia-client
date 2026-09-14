@@ -53,6 +53,7 @@ public:
         IsSocks5ProxyRole,
         IsMtProxyRole,
         IsTelemtRole,
+        IsDnsttRole,
     };
     
     Q_INVOKABLE void openContainerSettings(int containerIndex);

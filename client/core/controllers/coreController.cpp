@@ -187,7 +187,7 @@ void CoreController::initControllers()
                                                      m_ikev2ConfigModel,
 #endif
                                                      m_sftpConfigModel, m_socks5ConfigModel, m_mtProxyConfigModel, m_telemtConfigModel,
-                                                     m_connectionController, this);
+                                                     m_dnsttConfigModel, m_connectionController, this);
     setQmlContextProperty("InstallController", m_installUiController);
 
     m_importController = new ImportUiController(m_importCoreController, this);

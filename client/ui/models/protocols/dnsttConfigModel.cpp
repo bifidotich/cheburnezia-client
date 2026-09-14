@@ -1,5 +1,7 @@
 #include "dnsttConfigModel.h"
 
+#include <QJsonDocument>
+
 #include <QHostAddress>
 #include <QRegularExpression>
 #include <QStringList>
@@ -39,6 +41,7 @@ void DnsttConfigModel::setResolvers(const QString &resolvers)
     if (m_config.resolvers != resolvers) {
         m_config.resolvers = resolvers;
         emit resolversChanged();
+        emit isResolversValidChanged();
         emit needsBootstrapChanged();
         emit isValidChanged();
     }
@@ -87,6 +90,26 @@ bool DnsttConfigModel::isPublicKeyValid() const
 {
     static const QRegularExpression hexRegex("^[0-9a-fA-F]{64}$");
     return hexRegex.match(m_config.publicKey.trimmed()).hasMatch();
+}
+
+bool DnsttConfigModel::isResolversValid() const
+{
+    // An empty field is "not filled in yet", not "wrong": Save stays disabled
+    // through isValid(), but no error is shown while the user is still typing.
+    if (m_config.resolvers.trimmed().isEmpty()) {
+        return true;
+    }
+    return amnezia::DnsttProtocolConfig::areResolversValid(m_config.resolvers);
+}
+
+QString DnsttConfigModel::resolversError() const
+{
+    if (m_config.resolvers.trimmed().isEmpty()) {
+        return QString();
+    }
+    QString err;
+    amnezia::DnsttProtocolConfig::areResolversValid(m_config.resolvers, &err);
+    return err;
 }
 
 bool DnsttConfigModel::needsBootstrap() const
@@ -145,4 +168,42 @@ QString DnsttConfigModel::generateUri() const
     }
     url.setQuery(query);
     return url.toString();
+}
+
+void DnsttConfigModel::updateModel(amnezia::DockerContainer container, const amnezia::DnsttProtocolConfig &protocolConfig)
+{
+    Q_UNUSED(container);
+
+    m_config = protocolConfig;
+
+    emit domainChanged();
+    emit resolversChanged();
+    emit bootstrapIpChanged();
+    emit publicKeyChanged();
+    emit calculatedMtuChanged();
+    emit isMtuValidChanged();
+    emit isPublicKeyValidChanged();
+    emit isResolversValidChanged();
+    emit needsBootstrapChanged();
+    emit isValidChanged();
+}
+
+void DnsttConfigModel::updateModel(const QJsonObject &config)
+{
+    updateModel(amnezia::DockerContainer::Dnstt, amnezia::DnsttProtocolConfig::fromJson(config));
+}
+
+amnezia::DnsttProtocolConfig DnsttConfigModel::getProtocolConfig() const
+{
+    amnezia::DnsttProtocolConfig cfg = m_config;
+    cfg.domain = cfg.domain.trimmed();
+    cfg.resolvers = cfg.resolvers.trimmed();
+    cfg.bootstrapIp = cfg.bootstrapIp.trimmed();
+    cfg.publicKey = cfg.publicKey.trimmed();
+    return cfg;
+}
+
+QJsonObject DnsttConfigModel::getConfig() const
+{
+    return getProtocolConfig().toJson();
 }

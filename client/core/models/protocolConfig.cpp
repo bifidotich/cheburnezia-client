@@ -1,5 +1,7 @@
 #include "protocolConfig.h"
 
+#include <QJsonDocument>
+
 #include "core/utils/protocolEnum.h"
 #include "core/protocols/protocolUtils.h"
 #include "core/utils/constants/configKeys.h"
@@ -245,6 +247,10 @@ QString ProtocolConfig::nativeConfig() const
             if (arg.clientConfig.has_value()) {
                 return arg.clientConfig->nativeConfig;
             }
+        } else if constexpr (std::is_same_v<T, DnsttProtocolConfig>) {
+            // DNSTT has no vendor config file: the imported parameters are the
+            // whole configuration, so render them as the native config.
+            return QString::fromUtf8(QJsonDocument(arg.toClientJson()).toJson(QJsonDocument::Indented));
         }
         return QString();
     }, data);

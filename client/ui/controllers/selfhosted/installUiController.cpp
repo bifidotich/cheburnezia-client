@@ -53,6 +53,7 @@ InstallUiController::InstallUiController(InstallController *installController,
                                          Socks5ProxyConfigModel *socks5ConfigModel,
                                          MtProxyConfigModel* mtConfigModel,
                                          TelemtConfigModel *telemtConfigModel,
+                                         DnsttConfigModel *dnsttConfigModel,
                                          ConnectionController *connectionController,
                                          QObject *parent)
     : QObject(parent),
@@ -73,6 +74,7 @@ InstallUiController::InstallUiController(InstallController *installController,
       m_socks5ConfigModel(socks5ConfigModel),
       m_mtProxyConfigModel(mtConfigModel),
       m_telemtConfigModel(telemtConfigModel),
+      m_dnsttConfigModel(dnsttConfigModel),
       m_connectionController(connectionController)
 {
     connect(m_installController, &InstallController::configValidated, this, &InstallUiController::configValidated);
@@ -255,6 +257,10 @@ bool InstallUiController::buildContainerConfigFromModel(int containerIndex, int 
     }
     case Proto::Telemt: {
         containerConfig.protocolConfig = m_telemtConfigModel->getProtocolConfig();
+        break;
+    }
+    case Proto::Dnstt: {
+        containerConfig.protocolConfig = m_dnsttConfigModel->getProtocolConfig();
         break;
     }
 #ifdef Q_OS_WINDOWS
@@ -711,6 +717,7 @@ void InstallUiController::updateProtocolConfigModel(const QString &serverId, int
     case Proto::Socks5Proxy: updateIfPresent(m_socks5ConfigModel, containerConfig.getSocks5ProxyProtocolConfig()); break;
     case Proto::MtProxy: updateIfPresent(m_mtProxyConfigModel, containerConfig.getMtProxyProtocolConfig()); break;
     case Proto::Telemt: updateIfPresent(m_telemtConfigModel, containerConfig.getTelemtProtocolConfig()); break;
+    case Proto::Dnstt: updateIfPresent(m_dnsttConfigModel, containerConfig.getDnsttProtocolConfig()); break;
 #ifdef Q_OS_WINDOWS
     case Proto::Ikev2: updateIfPresent(m_ikev2ConfigModel, containerConfig.getIkev2ProtocolConfig()); break;
 #endif

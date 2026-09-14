@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import SortFilterProxyModel 0.2
 
 import PageEnum 1.0
+import ProtocolEnum 1.0
 import Style 1.0
 
 import "../Controls2"
@@ -33,6 +34,15 @@ ListViewType {
                 if (isInstalled) {
                     var containerIndex = root.model.mapToSource(index)
                     ServersUiController.processedContainerIndex = containerIndex
+
+                    // DNSTT is a client-only third-party config, but it has an
+                    // editable settings page instead of the read-only raw view.
+                    if (isDnstt) {
+                        InstallController.updateProtocols(ServersUiController.processedServerId, containerIndex)
+                        InstallController.openClientSettings(ServersUiController.processedServerId, containerIndex, ProtocolEnum.Dnstt)
+                        PageController.goToPage(PageEnum.PageProtocolDnsttSettings)
+                        return
+                    }
 
                     if (isVpnContainer) {
                         // var isThirdPartyConfig = root.model.data(index, ContainersModel.IsThirdPartyConfigRole)

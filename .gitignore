@@ -154,3 +154,7 @@ client/3rd/dnstt/libdnstt.h
 aqtinstall.log
 dnstt-log.txt
 deploy/*.log
+
+# Personal dnstt research lab: DoH-resolver finder + tunnel tester, result logs,
+# and the config ledger (contains server keys/endpoints). Never tracked.
+dnstt-lab/

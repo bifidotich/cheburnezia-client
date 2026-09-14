@@ -29,8 +29,23 @@ export CMAKE_EXTRA_ARGS="${CMAKE_EXTRA_ARGS:--C ${ROOT_DIR}/branding/cheburnezia
 
 command -v go >/dev/null || { echo "go is required to build libdnstt.so" >&2; exit 1; }
 
+# The gradle project signs the release variants itself and fails :packageOssRelease
+# outright when no keystore is configured, so the keystore has to exist and be
+# exported before build.sh reaches androiddeployqt.
+if [ ! -f "${KEYSTORE}" ]; then
+    keytool -genkey -v -keystore "${KEYSTORE}" -storepass android -alias androiddebugkey \
+        -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
+        -dname "CN=Android Debug,O=Android,C=US"
+fi
+export QT_ANDROID_KEYSTORE_PATH="${KEYSTORE}"
+export QT_ANDROID_KEYSTORE_ALIAS=androiddebugkey
+export QT_ANDROID_KEYSTORE_STORE_PASS=android
+
 echo "=== 1. Building C++ core, libdnstt.so and Qt resources ==="
-bash ./deploy/build.sh -t android --abi "${ABI}"
+# -f wipes deploy/build. Without it CMakeCache keeps the previous run's
+# ANDROID_ABI and Qt toolchain while --abi only updates QT_ANDROID_ABIS, so
+# conan resolves dependencies for the wrong architecture.
+bash ./deploy/build.sh -t android --abi "${ABI}" -f
 
 echo "=== 2. Injecting QML plugins into libs.xml ==="
 python3 "${ROOT_DIR}/deploy/patch_libs_xml.py" "${ANDROID_BUILD_DIR}"
@@ -40,13 +55,23 @@ chmod +x "${ANDROID_BUILD_DIR}/gradlew"
 (cd "${ANDROID_BUILD_DIR}" && ./gradlew assembleRelease)
 
 echo "=== 4. Aligning and signing ==="
-if [ ! -f "${KEYSTORE}" ]; then
-    keytool -genkey -v -keystore "${KEYSTORE}" -storepass android -alias androiddebugkey \
-        -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
-        -dname "CN=Android Debug,O=Android,C=US"
+# The billing flavours (oss/play) split the output directory, so the old
+# release/ path only exists on pre-flavour builds. oss is the non-Play build.
+APK_OUT="${ANDROID_BUILD_DIR}/build/outputs/apk"
+for candidate in \
+    "${APK_OUT}/${FLAVOUR:-oss}/release/android-build-${FLAVOUR:-oss}-release.apk" \
+    "${APK_OUT}/release/android-build-release-unsigned.apk" \
+    "${APK_OUT}/android-build-release-unsigned.apk"
+do
+    [ -f "$candidate" ] && { UNSIGNED_APK="$candidate"; break; }
+done
+if [ -z "${UNSIGNED_APK:-}" ]; then
+    echo "No APK found under ${APK_OUT}" >&2
+    find "${APK_OUT}" -name '*.apk' >&2
+    exit 1
 fi
+echo "Packaging ${UNSIGNED_APK}"
 
-UNSIGNED_APK="${ANDROID_BUILD_DIR}/build/outputs/apk/release/android-build-release-unsigned.apk"
 ALIGNED_APK="$(mktemp -u /tmp/AmneziaVPN-aligned-XXXXXX.apk)"
 FINAL_APK="${ROOT_DIR}/deploy/build/AmneziaVPN-dnstt.apk"
 
