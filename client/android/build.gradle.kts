@@ -182,6 +182,7 @@ dependencies {
     implementation(project(":openvpn"))
     implementation(project(":xray"))
     implementation(project(":dnstt"))
+    implementation(project(":olcrtc"))
     implementation(libs.androidx.core)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.fragment)

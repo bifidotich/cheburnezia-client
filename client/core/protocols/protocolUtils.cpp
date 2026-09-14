@@ -65,6 +65,7 @@ QMap<Proto, QString> ProtocolUtils::protocolHumanNames()
              { Proto::Xray, "XRay" },
              { Proto::SSXray, "Shadowsocks"},
              { Proto::Dnstt, "DNSTT" },
+             { Proto::Olcrtc, "olcRTC" },
 
              { Proto::TorWebSite, "Website in Tor network" },
              { Proto::Dns, "DNS Service" },
@@ -92,6 +93,7 @@ ServiceType ProtocolUtils::protocolService(Proto p)
     case Proto::Ikev2: return ServiceType::Vpn;
     case Proto::Xray: return ServiceType::Vpn;
     case Proto::Dnstt: return ServiceType::Vpn;
+    case Proto::Olcrtc: return ServiceType::Vpn;
 
     case Proto::TorWebSite: return ServiceType::Other;
     case Proto::Dns: return ServiceType::Other;

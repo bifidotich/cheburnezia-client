@@ -25,6 +25,7 @@
 #include "core/models/protocols/mtProxyProtocolConfig.h"
 #include "core/models/protocols/telemtProtocolConfig.h"
 #include "core/models/protocols/dnsttProtocolConfig.h"
+#include "core/models/protocols/olcrtcProtocolConfig.h"
 
 namespace amnezia
 {
@@ -44,7 +45,8 @@ struct ProtocolConfig {
         Ikev2ProtocolConfig,
         TorProtocolConfig,
         DnsProtocolConfig,
-        DnsttProtocolConfig
+        DnsttProtocolConfig,
+        OlcrtcProtocolConfig
     >;
     
     Variant data;

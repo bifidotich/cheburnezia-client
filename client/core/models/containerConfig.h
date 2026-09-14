@@ -74,6 +74,9 @@ struct ContainerConfig {
 
     DnsttProtocolConfig* getDnsttProtocolConfig();
     const DnsttProtocolConfig* getDnsttProtocolConfig() const;
+
+    OlcrtcProtocolConfig* getOlcrtcProtocolConfig();
+    const OlcrtcProtocolConfig* getOlcrtcProtocolConfig() const;
 };
 
 } // namespace amnezia

@@ -14,6 +14,7 @@
 #include "core/models/protocols/mtProxyProtocolConfig.h"
 #include "core/models/protocols/telemtProtocolConfig.h"
 #include "core/models/protocols/dnsttProtocolConfig.h"
+#include "core/models/protocols/olcrtcProtocolConfig.h"
 
 namespace amnezia
 {
@@ -49,6 +50,8 @@ Proto ProtocolConfig::type() const
             return Proto::Telemt;
         } else if constexpr (std::is_same_v<T, DnsttProtocolConfig>) {
             return Proto::Dnstt;
+        } else if constexpr (std::is_same_v<T, OlcrtcProtocolConfig>) {
+            return Proto::Olcrtc;
         }
         return Proto::Unknown;
     }, data);
@@ -124,6 +127,8 @@ bool ProtocolConfig::hasClientConfig() const
             return arg.hasClientConfig();
         } else if constexpr (std::is_same_v<T, DnsttProtocolConfig>) {
             return arg.isValid();
+        } else if constexpr (std::is_same_v<T, OlcrtcProtocolConfig>) {
+            return arg.isValid();
         }
         return false;
     }, data);
@@ -184,6 +189,10 @@ QJsonObject ProtocolConfig::getClientConfigJson() const
             }
         } else if constexpr (std::is_same_v<T, DnsttProtocolConfig>) {
             // DNSTT has no separate client config: the imported fields are
+            // themselves what the Android layer consumes.
+            return arg.toClientJson();
+        } else if constexpr (std::is_same_v<T, OlcrtcProtocolConfig>) {
+            // olcRTC has no separate client config: the imported fields are
             // themselves what the Android layer consumes.
             return arg.toClientJson();
         }
@@ -251,6 +260,10 @@ QString ProtocolConfig::nativeConfig() const
             // DNSTT has no vendor config file: the imported parameters are the
             // whole configuration, so render them as the native config.
             return QString::fromUtf8(QJsonDocument(arg.toClientJson()).toJson(QJsonDocument::Indented));
+        } else if constexpr (std::is_same_v<T, OlcrtcProtocolConfig>) {
+            // olcRTC has no vendor config file: the imported parameters are the
+            // whole configuration, so render them as the native config.
+            return QString::fromUtf8(QJsonDocument(arg.toClientJson()).toJson(QJsonDocument::Indented));
         }
         return QString();
     }, data);
@@ -296,6 +309,8 @@ bool ProtocolConfig::isThirdPartyConfig() const
             return arg.serverConfig.isThirdPartyConfig;
         } else if constexpr (std::is_same_v<T, DnsttProtocolConfig>) {
             return arg.isThirdPartyConfig;
+        } else if constexpr (std::is_same_v<T, OlcrtcProtocolConfig>) {
+            return arg.isThirdPartyConfig;
         }
         return false;
     }, data);
@@ -336,6 +351,8 @@ ProtocolConfig ProtocolConfig::fromJson(const QJsonObject& json, Proto type)
         return ProtocolConfig{TelemtProtocolConfig::fromJson(json)};
     case Proto::Dnstt:
         return ProtocolConfig{DnsttProtocolConfig::fromJson(json)};
+    case Proto::Olcrtc:
+        return ProtocolConfig{OlcrtcProtocolConfig::fromJson(json)};
     default:
         return ProtocolConfig{AwgProtocolConfig{}};
     }

@@ -61,6 +61,7 @@ namespace PageLoader
         PageSetupWizardApiServicesList,
         PageSetupWizardApiFreeInfo,
         PageSetupWizardDnsttSettings,
+        PageSetupWizardOlcrtcSettings,
 
         PageProtocolOpenVpnSettings,
         PageProtocolXraySettings,
@@ -68,6 +69,7 @@ namespace PageLoader
         PageProtocolAwgSettings,
         PageProtocolIKev2Settings,
         PageProtocolDnsttSettings,
+        PageProtocolOlcrtcSettings,
         PageProtocolRaw,
 
         PageProtocolWireGuardClientSettings,

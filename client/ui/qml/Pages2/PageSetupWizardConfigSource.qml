@@ -272,6 +272,7 @@ PageType {
         amneziaVpn,
         selfHostVpn,
         dnsttSetup,
+        olcrtcSetup,
         backupRestore,
         fileOpen,
         qrScan,
@@ -291,7 +292,20 @@ PageType {
             PageController.goToPage(PageEnum.PageSetupWizardDnsttSettings)
         }
     }
-    
+
+    QtObject {
+        id: olcrtcSetup
+
+        property bool featuredAmneziaConnection: false
+        property string title: qsTr("olcRTC (WebRTC Tunnel)")
+        property string description: qsTr("Manual connection disguised as a video call on a legal meeting service")
+        property string imageSource: "qrc:/images/controls/server.svg"
+        property bool isVisible: Qt.platform.os === "android"
+        property var handler: function() {
+            PageController.goToPage(PageEnum.PageSetupWizardOlcrtcSettings)
+        }
+    }
+
     QtObject {
         id: amneziaVpn
 

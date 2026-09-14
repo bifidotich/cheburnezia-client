@@ -128,6 +128,50 @@ else()
                     "the DNSTT protocol will not work in this build")
 endif()
 
+# libolcrtc is built exactly like libdnstt: from the in-tree Go module in
+# 3rd/olcrtc using the NDK toolchain. olcRTC itself is pulled as a go.mod
+# dependency, so only our integration and JNI sources live in the repository.
+# The NDK host tag, GOARCH and CC prefix computed for libdnstt above are reused.
+set(OLCRTC_MODULE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rd/olcrtc)
+set(OLCRTC_OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android/libs/${CMAKE_ANDROID_ARCH_ABI})
+set(OLCRTC_LIBRARY ${OLCRTC_OUTPUT_DIR}/libolcrtc.so)
+
+if(GO_EXECUTABLE AND DNSTT_GOARCH AND DNSTT_NDK_ROOT)
+    set(OLCRTC_CC ${DNSTT_NDK_ROOT}/toolchains/llvm/prebuilt/${DNSTT_NDK_HOST_TAG}/bin/${DNSTT_CC_PREFIX}${APP_ANDROID_MIN_SDK}-clang)
+
+    file(GLOB_RECURSE OLCRTC_SOURCES CONFIGURE_DEPENDS
+        ${OLCRTC_MODULE_DIR}/*.go
+        ${OLCRTC_MODULE_DIR}/*.c
+        ${OLCRTC_MODULE_DIR}/*.h
+    )
+
+    add_custom_command(
+        OUTPUT ${OLCRTC_LIBRARY}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${OLCRTC_OUTPUT_DIR}
+        COMMAND ${CMAKE_COMMAND} -E env
+            CGO_ENABLED=1
+            GOOS=android
+            GOARCH=${DNSTT_GOARCH}
+            GOARM=7
+            CC=${OLCRTC_CC}
+            ${GO_EXECUTABLE} build -buildmode=c-shared
+            -ldflags "-s -w -checklinkname=0 -extldflags=-Wl,-z,max-page-size=16384"
+            -o ${OLCRTC_LIBRARY} ./jni
+        WORKING_DIRECTORY ${OLCRTC_MODULE_DIR}
+        DEPENDS ${OLCRTC_SOURCES}
+        COMMENT "Building libolcrtc.so for ${CMAKE_ANDROID_ARCH_ABI}"
+        VERBATIM
+    )
+
+    add_custom_target(libolcrtc DEPENDS ${OLCRTC_LIBRARY})
+    add_dependencies(${PROJECT} libolcrtc)
+elseif(EXISTS ${OLCRTC_LIBRARY})
+    message(WARNING "Go toolchain not found; packaging the existing ${OLCRTC_LIBRARY}")
+else()
+    message(WARNING "Go toolchain not found and no prebuilt libolcrtc.so for ${CMAKE_ANDROID_ARCH_ABI}; "
+                    "the olcRTC protocol will not work in this build")
+endif()
+
 find_package(openvpn-pt-android REQUIRED)
 set(LIBS ${LIBS} amnezia::openvpn-pt-android)
 set_property(TARGET ${PROJECT} APPEND PROPERTY QT_ANDROID_EXTRA_LIBS ${OPENVPN_PT_ANDROID_LIBCK_OVPN_PLUGIN_PATH})

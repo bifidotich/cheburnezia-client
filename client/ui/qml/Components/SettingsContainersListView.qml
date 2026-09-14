@@ -44,6 +44,13 @@ ListViewType {
                         return
                     }
 
+                    if (isOlcrtc) {
+                        InstallController.updateProtocols(ServersUiController.processedServerId, containerIndex)
+                        InstallController.openClientSettings(ServersUiController.processedServerId, containerIndex, ProtocolEnum.Olcrtc)
+                        PageController.goToPage(PageEnum.PageProtocolOlcrtcSettings)
+                        return
+                    }
+
                     if (isVpnContainer) {
                         // var isThirdPartyConfig = root.model.data(index, ContainersModel.IsThirdPartyConfigRole)
                         if (isThirdPartyConfig) {

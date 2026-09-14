@@ -29,6 +29,7 @@
 #include "core/utils/constants/protocolConstants.h"
 #include "core/utils/qrCodeUtils.h"
 #include "core/models/protocols/dnsttProtocolConfig.h"
+#include "core/models/protocols/olcrtcProtocolConfig.h"
 
 using namespace amnezia;
 using namespace ProtocolUtils;
@@ -166,6 +167,15 @@ ImportController::ImportResult ImportController::extractConfigFromData(const QSt
     if (config.startsWith("dnstt://")) {
         configType = ConfigTypes::Dnstt;
         result.config = extractDnsttConfig(config);
+        if (!result.config.empty()) {
+            result.configType = configType;
+            return result;
+        }
+    }
+
+    if (config.startsWith("olcrtc://")) {
+        configType = ConfigTypes::Olcrtc;
+        result.config = extractOlcrtcConfig(config);
         if (!result.config.empty()) {
             result.configType = configType;
             return result;
@@ -808,6 +818,50 @@ QJsonObject ImportController::extractDnsttConfig(const QString &data) const
     serverConfig[configKey::defaultContainer] = ContainerUtils::containerToString(DockerContainer::Dnstt);
     serverConfig[configKey::description] = m_serversRepository->nextAvailableServerName();
     serverConfig[configKey::hostName] = dnsttConfig.domain.trimmed();
+
+    return serverConfig;
+}
+
+QJsonObject ImportController::extractOlcrtcConfig(const QString &data) const
+{
+    // olcrtc://<keyHex>@<provider>?room=<url-encoded>&transport=<t>&dns=<ip>&token=<...>
+    const QUrl url(data);
+    if (!url.isValid()) {
+        qDebug() << "olcRTC link is not a valid URL";
+        return QJsonObject();
+    }
+
+    const QUrlQuery query(url.query());
+
+    OlcrtcProtocolConfig olcrtcConfig;
+    olcrtcConfig.key = url.userName();
+    olcrtcConfig.provider = url.host();
+    olcrtcConfig.roomUrl = query.queryItemValue("room", QUrl::FullyDecoded);
+    if (olcrtcConfig.roomUrl.isEmpty()) {
+        olcrtcConfig.roomUrl = query.queryItemValue("room_url", QUrl::FullyDecoded);
+    }
+    olcrtcConfig.transport = query.queryItemValue("transport", QUrl::FullyDecoded);
+    olcrtcConfig.dns = query.queryItemValue("dns", QUrl::FullyDecoded);
+    olcrtcConfig.providerToken = query.queryItemValue("token", QUrl::FullyDecoded);
+
+    QString error;
+    if (!olcrtcConfig.isValid(&error)) {
+        qDebug() << "olcRTC link rejected:" << error;
+        return QJsonObject();
+    }
+
+    QJsonObject olcrtcContainer;
+    olcrtcContainer.insert(configKey::container, QJsonValue(ContainerUtils::containerToString(DockerContainer::Olcrtc)));
+    olcrtcContainer.insert(ProtocolUtils::protoToString(Proto::Olcrtc), olcrtcConfig.toJson());
+
+    QJsonArray containers;
+    containers.push_back(olcrtcContainer);
+
+    QJsonObject serverConfig;
+    serverConfig[configKey::containers] = containers;
+    serverConfig[configKey::defaultContainer] = ContainerUtils::containerToString(DockerContainer::Olcrtc);
+    serverConfig[configKey::description] = m_serversRepository->nextAvailableServerName();
+    serverConfig[configKey::hostName] = olcrtcConfig.provider.trimmed() + QStringLiteral(" (olcRTC)");
 
     return serverConfig;
 }

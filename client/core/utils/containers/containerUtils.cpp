@@ -80,6 +80,7 @@ QMap<DockerContainer, QString> ContainerUtils::containerHumanNames()
              { DockerContainer::MtProxy, QObject::tr("MTProxy (Telegram)") },
              { DockerContainer::Telemt, QObject::tr("Telemt (Telegram)") },
              { DockerContainer::Dnstt, "DNSTT" },
+             { DockerContainer::Olcrtc, "olcRTC" },
     };
 }
 
@@ -120,6 +121,8 @@ QMap<DockerContainer, QString> ContainerUtils::containerDescriptions()
                QObject::tr("Telegram MTProto proxy (Telemt, Rust)") },
              { DockerContainer::Dnstt,
                 QObject::tr("DNS tunnel with Noise NK encryption and DoH/DoT transport") },
+             { DockerContainer::Olcrtc,
+                QObject::tr("Encrypted tunnel disguised as a WebRTC video call over a legal meeting service") },
     };
 }
 
@@ -210,6 +213,16 @@ QMap<DockerContainer, QString> ContainerUtils::containerDetailedDescriptions()
                       "* Low throughput, typically 100-500 Kbps, because every byte is encoded "
                       "into DNS names\n"
                       "* Requires a dnstt-server that forwards streams to a SOCKS5 proxy") },
+        { DockerContainer::Olcrtc,
+          QObject::tr("olcRTC tunnels traffic inside a WebRTC session on a legal meeting service "
+                      "(Jitsi, Yandex Telemost, WbStream), so it looks like an ordinary video call. "
+                      "The session is encrypted with XChaCha20-Poly1305.\n"
+                      "\nFeatures:\n"
+                      "* Disguises traffic as a video call on a permitted service\n"
+                      "* Selectable transport: data channel or hidden inside the video stream\n"
+                      "* Carries TCP only: UDP applications such as QUIC, VoIP and games are not "
+                      "supported, and DNS itself is relayed over TCP\n"
+                      "* Requires an olcRTC server peer and a room on the chosen provider") },
     };
 }
 
@@ -242,6 +255,7 @@ Proto ContainerUtils::defaultProtocol(DockerContainer c)
     case DockerContainer::MtProxy: return Proto::MtProxy;
     case DockerContainer::Telemt: return Proto::Telemt;
     case DockerContainer::Dnstt: return Proto::Dnstt;
+    case DockerContainer::Olcrtc: return Proto::Olcrtc;
     default: return Proto::Unknown;
     }
 }
@@ -258,9 +272,9 @@ QString ContainerUtils::containerTypeToProtocolString(DockerContainer c)
 bool ContainerUtils::isSupportedByCurrentPlatform(DockerContainer c)
 {
 #ifdef Q_OS_WINDOWS
-    // DNSTT is imported on Android only: there is no server-side container to
-    // install, so it must not appear in the self-hosted wizard.
-    return c != DockerContainer::Dnstt;
+    // DNSTT and olcRTC are imported on Android only: there is no server-side
+    // container to install, so they must not appear in the self-hosted wizard.
+    return c != DockerContainer::Dnstt && c != DockerContainer::Olcrtc;
 
 #elif defined(Q_OS_IOS)
     // Standard iOS build (without Network Extension limitations)
@@ -298,6 +312,7 @@ bool ContainerUtils::isSupportedByCurrentPlatform(DockerContainer c)
     case DockerContainer::WireGuard: return true;
     case DockerContainer::Ipsec: return false;
     case DockerContainer::Dnstt: return false;
+    case DockerContainer::Olcrtc: return false;
     default: return true;
     }
 
@@ -312,6 +327,7 @@ bool ContainerUtils::isSupportedByCurrentPlatform(DockerContainer c)
     case DockerContainer::MtProxy: return true;
     case DockerContainer::Telemt: return true;
     case DockerContainer::Dnstt: return true;
+    case DockerContainer::Olcrtc: return true;
     default: return false;
     }
 
@@ -319,6 +335,7 @@ bool ContainerUtils::isSupportedByCurrentPlatform(DockerContainer c)
     switch (c) {
     case DockerContainer::Ipsec: return false;
     case DockerContainer::Dnstt: return false;
+    case DockerContainer::Olcrtc: return false;
     default: return true;
     }
 

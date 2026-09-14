@@ -38,6 +38,7 @@ include(":openvpn")
 include(":xray")
 include(":xray:libXray")
 include(":dnstt")
+include(":olcrtc")
 
 // get values from gradle or local properties
 val androidBuildToolsVersion: String by gradleProperties

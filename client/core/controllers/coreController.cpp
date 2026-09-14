@@ -116,6 +116,9 @@ void CoreController::initModels()
     m_dnsttConfigModel = new DnsttConfigModel(this);
     setQmlContextProperty("DnsttConfigModel", m_dnsttConfigModel);
 
+    m_olcrtcConfigModel = new OlcrtcConfigModel(this);
+    setQmlContextProperty("OlcrtcConfigModel", m_olcrtcConfigModel);
+
     m_clientManagementModel = new ClientManagementModel(this);
     setQmlContextProperty("ClientManagementModel", m_clientManagementModel);
 
@@ -187,7 +190,7 @@ void CoreController::initControllers()
                                                      m_ikev2ConfigModel,
 #endif
                                                      m_sftpConfigModel, m_socks5ConfigModel, m_mtProxyConfigModel, m_telemtConfigModel,
-                                                     m_dnsttConfigModel, m_connectionController, this);
+                                                     m_dnsttConfigModel, m_olcrtcConfigModel, m_connectionController, this);
     setQmlContextProperty("InstallController", m_installUiController);
 
     m_importController = new ImportUiController(m_importCoreController, this);

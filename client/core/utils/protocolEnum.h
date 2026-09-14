@@ -26,6 +26,7 @@ namespace amnezia
             Xray,
             SSXray,
             Dnstt,
+            Olcrtc,
 
             // non-vpn
             TorWebSite,

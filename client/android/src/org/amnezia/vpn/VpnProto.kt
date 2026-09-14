@@ -57,6 +57,14 @@ enum class VpnProto(
         DnsttService::class.java
     ) {
         override fun createProtocol(): Protocol = org.amnezia.vpn.protocol.dnstt.Dnstt.instance
+    },
+
+    OLCRTC(
+        "Olcrtc",
+        "org.amnezia.vpn:amneziaOlcrtcService",
+        OlcrtcService::class.java
+    ) {
+        override fun createProtocol(): Protocol = org.amnezia.vpn.protocol.olcrtc.Olcrtc.instance
     };
 
     private var _protocol: Protocol? = null

@@ -173,5 +173,15 @@ const DnsttProtocolConfig* ContainerConfig::getDnsttProtocolConfig() const
     return protocolConfig.as<DnsttProtocolConfig>();
 }
 
+OlcrtcProtocolConfig* ContainerConfig::getOlcrtcProtocolConfig()
+{
+    return protocolConfig.as<OlcrtcProtocolConfig>();
+}
+
+const OlcrtcProtocolConfig* ContainerConfig::getOlcrtcProtocolConfig() const
+{
+    return protocolConfig.as<OlcrtcProtocolConfig>();
+}
+
 } // namespace amnezia
 

@@ -54,6 +54,7 @@ public:
         IsMtProxyRole,
         IsTelemtRole,
         IsDnsttRole,
+        IsOlcrtcRole,
     };
     
     Q_INVOKABLE void openContainerSettings(int containerIndex);
