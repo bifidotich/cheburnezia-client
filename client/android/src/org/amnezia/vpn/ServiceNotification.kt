@@ -66,7 +66,8 @@ class ServiceNotification(private val context: Context) {
 
         return notificationBuilder
             .setSmallIcon(R.drawable.ic_amnezia_round)
-            .setContentTitle((serverName ?: "AmneziaVPN") + (protocol?.let { " $it" } ?: ""))
+            .setContentTitle((serverName ?: context.applicationInfo.loadLabel(context.packageManager).toString()) +
+                (protocol?.let { " $it" } ?: ""))
             .setContentText(context.getString(state))
             .setSubText(speedString)
             .setWhen(System.currentTimeMillis())
@@ -158,7 +159,7 @@ class ServiceNotification(private val context: Context) {
                         .setSound(null, null)
                         .setVibrationEnabled(false)
                         .setLightsEnabled(false)
-                        .setName("AmneziaVPN")
+                        .setName(context.applicationInfo.loadLabel(context.packageManager))
                         .setDescription(context.resources.getString(R.string.notificationChannelDescription))
                         .build()
                 )

@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+    Cheburnezia overrides of res/values/strings.xml.
+
+    src/oss/res is Gradle's default resource directory of the oss flavor, and
+    flavor resources replace same-named ones from main, so these strings win
+    without touching upstream files. Only strings that name the app belong here.
+-->
+<resources>
+    <string name="vpnSetupFailedMessage">To connect to Cheburnezia, please do the following:\n\n- Allow the app to set up a VPN connection\n- Disable Always-on VPN for any other VPN app in the VPN system settings</string>
+    <string name="notificationChannelDescription">Cheburnezia service notification</string>
+    <string name="notificationDialogTitle">Cheburnezia service</string>
+</resources>

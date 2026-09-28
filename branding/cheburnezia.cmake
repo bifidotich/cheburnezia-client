@@ -35,6 +35,13 @@ set(CHEBURNEZIA_BUILD 1 CACHE STRING "Cheburnezia release number")
 # (ForkUpdateController). Same as REPO in deploy/release_android.sh.
 set(CHEBURNEZIA_UPDATE_REPO "bifidotich/cheburnezia-client" CACHE STRING "")
 
+# UI strings that call the app "Amnezia" and the About page links. translations.cmake
+# runs right after project(${CLIENT_TARGET_NAME}), generates the .ts files from
+# upstream's with translations/overrides.json applied and points CLIENT_TS_FILES
+# at them. The GitHub link on the About page follows CHEBURNEZIA_UPDATE_REPO.
+set(CMAKE_PROJECT_${CLIENT_TARGET_NAME}_INCLUDE
+    "${CMAKE_CURRENT_LIST_DIR}/translations.cmake" CACHE FILEPATH "")
+
 # Android refuses to install an APK over one with the same or higher
 # versionCode. Upstream's code only grows and the fork number only grows, so
 # their sum is strictly increasing across fork releases and upstream merges.
@@ -47,8 +54,9 @@ set(APP_ANDROID_VERSION_CODE_OFFSET ${CHEBURNEZIA_BUILD} CACHE STRING "")
 #
 # CLIENT_TS_PREFIX      - translation files on disk are named amneziavpn_*.ts;
 #                         changing the prefix makes CMake look for files that
-#                         do not exist. Override only together with
-#                         CLIENT_TS_FILES pointing at renamed copies.
+#                         do not exist, and the app looks up the .qm files by
+#                         it. translations.cmake keeps the prefix for the
+#                         files it generates.
 # CLIENT_SERVICE_NAME   - becomes SERVICE_NAME, which the desktop client uses to
 #                         check that "<name>.exe" is running before connecting.
 #                         The service binary itself is hard-coded as

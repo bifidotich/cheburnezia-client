@@ -1,0 +1,88 @@
+{
+    "_doc": [
+        "UI strings the Cheburnezia fork overrides. Read by generate_ts.py, see branding/translations.cmake.",
+        "",
+        "Each entry selects upstream messages by exact 'source' or by 'source_startswith', optionally",
+        "narrowed to one 'context' (QML file name or C++ class). Placeholders: {app} is",
+        "CLIENT_APPLICATION_NAME, {repo_url} is https://github.com/<CHEBURNEZIA_UPDATE_REPO>.",
+        "",
+        "Text per language: an explicit key ('en', 'ru_RU', ...) wins, then 'all'. An explicit 'en'",
+        "means the message was reworded, so languages without their own key get the 'en' text.",
+        "Otherwise the existing translation (or, for English, the source) gets 'AmneziaVPN' /",
+        "'Amnezia' replaced by {app}; names like AmneziaWG and AmneziaDNS are left alone.",
+        "An untranslated message gets the English text.",
+        "",
+        "Only messages where Amnezia means THIS app are listed. AmneziaWG, AmneziaDNS, Amnezia",
+        "Premium/Free, the vpn:// config format and the Amnezia containers on the server are",
+        "Amnezia's products and keep their names."
+    ],
+    "messages": [
+        {
+            "context": "PageSettings",
+            "source": "About AmneziaVPN",
+            "ru_RU": "О {app}"
+        },
+        {
+            "context": "PageSettingsAbout",
+            "source": "Support Amnezia",
+            "en": "{app}",
+            "ru_RU": "{app}"
+        },
+        {
+            "context": "PageSettingsAbout",
+            "source": "Amnezia is a free and open-source application. You can support the developers if you like it.",
+            "en": "{app} is a free and open-source fork of AmneziaVPN, distributed under the GNU GPLv3. It is not affiliated with the Amnezia team.",
+            "ru_RU": "{app} — бесплатный форк AmneziaVPN с открытым исходным кодом, распространяется по лицензии GNU GPLv3. Не связан с командой Amnezia."
+        },
+        {
+            "context": "PageSettingsAbout",
+            "source": "Discover the source code",
+            "en": "Source code and bug reports",
+            "ru_RU": "Исходный код и сообщения об ошибках"
+        },
+        {
+            "context": "PageSettingsAbout",
+            "source": "https://github.com/amnezia-vpn/amnezia-client",
+            "en": "{repo_url}",
+            "all": "{repo_url}"
+        },
+        {
+            "context": "PageSetupWizardCredentials",
+            "source": "All data you enter will remain strictly confidential and will not be shared or disclosed to the Amnezia or any third parties",
+            "en": "All data you enter will remain strictly confidential and will not be shared or disclosed to the app developers or any third parties",
+            "ru_RU": "Все данные, которые вы вводите, останутся строго конфиденциальными и не будут переданы или раскрыты разработчикам приложения или каким-либо третьим лицам"
+        },
+        {
+            "context": "PageSetupWizardInstalling",
+            "source": "Amnezia has detected that your server is currently "
+        },
+        {
+            "context": "PageSetupWizardInstalling",
+            "source": "busy installing other software. Amnezia installation "
+        },
+        {
+            "context": "PageSetupWizardConfigSource",
+            "source": "Configure Amnezia VPN on your own server"
+        },
+        {
+            "context": "PageSettingsBackup",
+            "source_startswith": "The backup will contain your passwords and private keys"
+        },
+        {
+            "context": "PageSettingsLogging",
+            "source": "AmneziaVPN logs"
+        },
+        {
+            "context": "QObject",
+            "source_startswith": "After installation, Amnezia will create a"
+        },
+        {
+            "context": "NotificationHandler",
+            "source": "AmneziaVPN"
+        },
+        {
+            "context": "NotificationHandler",
+            "source": "AmneziaVPN notification"
+        }
+    ]
+}

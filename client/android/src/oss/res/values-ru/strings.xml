@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- Cheburnezia overrides of res/values-ru/strings.xml, see ../values/strings.xml. -->
+<resources>
+    <string name="vpnSetupFailedMessage">Чтобы подключиться к Cheburnezia, необходимо:\n\n- Разрешить приложению подключаться к сети VPN\n- Отключить функцию \"Постоянная VPN\" для всех остальных VPN-приложений в системных настройках VPN</string>
+    <string name="notificationChannelDescription">Уведомления сервиса Cheburnezia</string>
+    <string name="notificationDialogTitle">Сервис Cheburnezia</string>
+</resources>

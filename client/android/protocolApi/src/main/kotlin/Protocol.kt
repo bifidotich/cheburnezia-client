@@ -14,8 +14,6 @@ import org.json.JSONObject
 
 private const val TAG = "Protocol"
 
-const val VPN_SESSION_NAME = "AmneziaVPN"
-
 private const val SPLIT_TUNNEL_DISABLE = 0
 private const val SPLIT_TUNNEL_INCLUDE = 1
 private const val SPLIT_TUNNEL_EXCLUDE = 2
@@ -92,7 +90,8 @@ abstract class Protocol {
     }
 
     protected open fun buildVpnInterface(config: ProtocolConfig, vpnBuilder: Builder) {
-        vpnBuilder.setSession(VPN_SESSION_NAME)
+        // The app label (CLIENT_APPLICATION_NAME), shown in the system VPN settings.
+        vpnBuilder.setSession(context.applicationInfo.loadLabel(context.packageManager).toString())
 
         for (addr in config.addresses) {
             Log.d(TAG, "addAddress: $addr")

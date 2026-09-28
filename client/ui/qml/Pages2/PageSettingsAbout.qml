@@ -176,6 +176,9 @@ PageType {
             BasicButtonType {
                 id: privacyPolicyButton
 
+                // Fork: the link is Amnezia's policy, which does not cover this app.
+                visible: false
+
                 Layout.alignment: Qt.AlignHCenter
                 Layout.bottomMargin: 16
                 Layout.topMargin: -15
@@ -196,11 +199,11 @@ PageType {
         }
     }
     
+    // Fork: the GitHub repository is the only contact. Its URL is replaced with the
+    // fork's by branding/translations/overrides.json; the other entries are
+    // Amnezia's channels and stay defined only to keep upstream merges clean.
     property list<QtObject> contacts: [
-        telegramGroup,
-        mail,
-        github,
-        website
+        github
     ]
 
     QtObject {
