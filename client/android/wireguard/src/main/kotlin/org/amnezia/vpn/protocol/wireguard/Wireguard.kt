@@ -11,6 +11,7 @@ import org.amnezia.awg.GoBackend
 import org.amnezia.vpn.protocol.Protocol
 import org.amnezia.vpn.protocol.ProtocolState.CONNECTED
 import org.amnezia.vpn.protocol.ProtocolState.DISCONNECTED
+import org.amnezia.vpn.protocol.ProtocolState.RECONNECTING
 import org.amnezia.vpn.protocol.Statistics
 import org.amnezia.vpn.protocol.VpnException
 import org.amnezia.vpn.protocol.VpnStartException
@@ -25,6 +26,19 @@ import org.json.JSONObject
 
 private const val TAG = "Wireguard"
 
+// Dead tunnel detection. The awg-go backend keeps one UDP socket (and source port) for the
+// lifetime of the tunnel, so once a carrier NAT/DPI drops that flow handshakes never
+// succeed again, while the underlying network stays the same and no network change
+// reconnect happens. Recreating the tunnel opens a new socket.
+private const val WATCHDOG_INTERVAL_MS = 10_000L
+// consecutive failed samples before the tunnel is considered dead
+private const val WATCHDOG_STRIKES = 3
+// wireguard REJECT_AFTER_TIME: keys older than this cannot be used, so while traffic flows
+// a healthy tunnel always has a younger handshake
+private const val DEFAULT_REJECT_AFTER_TIME_SEC = 180L
+private const val RETRY_BACKOFF_BASE_SEC = 30L
+private const val RETRY_BACKOFF_MAX_SEC = 300L
+
 open class Wireguard : Protocol() {
 
     private var tunnelHandle: Int = -1
@@ -32,6 +46,9 @@ open class Wireguard : Protocol() {
     protected open val ifName: String = "amn0"
     private lateinit var scope: CoroutineScope
     private var statusJob: Job? = null
+    private var watchdogJob: Job? = null
+    // watchdog reconnects in a row that did not bring a handshake back
+    private var failedReconnects = 0
 
     override val statistics: Statistics
         get() {
@@ -189,6 +206,7 @@ open class Wireguard : Protocol() {
             throw VpnStartException("Protect VPN interface: permission not granted or revoked")
         }
         launchStatusJob()
+        launchWatchdogJob(config)
     }
 
     private fun launchStatusJob() {
@@ -207,6 +225,65 @@ open class Wireguard : Protocol() {
                 break
             }
         }
+    }
+
+    private fun launchWatchdogJob(config: WireguardConfig) {
+        val rejectAfterTime = config.rejectAfterTime?.trim()?.toLongOrNull() ?: DEFAULT_REJECT_AFTER_TIME_SEC
+        val tunnelStartTime = currentTimeSec()
+        watchdogJob = scope.launch {
+            var prev: TunnelStats? = null
+            var strikes = 0
+            while (true) {
+                delay(WATCHDOG_INTERVAL_MS)
+                val stats = getTunnelStats() ?: continue
+                val now = currentTimeSec()
+                val handshakeAge = now - stats.lastHandshake
+                if (stats.lastHandshake > 0 && handshakeAge < rejectAfterTime) failedReconnects = 0
+
+                val stale = if (stats.lastHandshake > 0) {
+                    handshakeAge > rejectAfterTime
+                } else {
+                    // no handshake since the previous watchdog reconnect: retry with backoff
+                    state.value == RECONNECTING && now - tunnelStartTime > retryBackoff()
+                }
+                // packets are sent, but nothing comes back
+                val oneWay = prev != null && stats.txBytes > prev.txBytes && stats.rxBytes == prev.rxBytes
+                prev = stats
+
+                strikes = if (stale && oneWay) strikes + 1 else 0
+                if (strikes < WATCHDOG_STRIKES) continue
+
+                Log.w(TAG, "Tunnel looks dead: lastHandshake=${stats.lastHandshake}, " +
+                    "failedReconnects=$failedReconnects, reconnecting")
+                ++failedReconnects
+                watchdogJob = null
+                requestReconnect()
+                break
+            }
+        }
+    }
+
+    private fun retryBackoff(): Long =
+        (RETRY_BACKOFF_BASE_SEC shl (failedReconnects - 1).coerceIn(0, 4)).coerceAtMost(RETRY_BACKOFF_MAX_SEC)
+
+    private fun currentTimeSec(): Long = System.currentTimeMillis() / 1000
+
+    private class TunnelStats(val lastHandshake: Long, val rxBytes: Long, val txBytes: Long)
+
+    private fun getTunnelStats(): TunnelStats? {
+        if (tunnelHandle == -1) return null
+        val config = GoBackend.awgGetConfig(tunnelHandle) ?: return null
+        var lastHandshake: Long? = null
+        var rxBytes: Long? = null
+        var txBytes: Long? = null
+        config.lineSequence().forEach { line ->
+            when {
+                line.startsWith("last_handshake_time_sec=") -> lastHandshake = line.substring(24).toLongOrNull()
+                line.startsWith("rx_bytes=") -> rxBytes = line.substring(9).toLongOrNull()
+                line.startsWith("tx_bytes=") -> txBytes = line.substring(9).toLongOrNull()
+            }
+        }
+        return TunnelStats(lastHandshake ?: return null, rxBytes ?: return null, txBytes ?: return null)
     }
 
     private fun getLastHandshake(): Long {
@@ -230,6 +307,8 @@ open class Wireguard : Protocol() {
     private fun turnOffVpn() {
         statusJob?.cancel()
         statusJob = null
+        watchdogJob?.cancel()
+        watchdogJob = null
         val handleToClose = tunnelHandle
         tunnelHandle = -1
         GoBackend.awgTurnOff(handleToClose)

@@ -99,6 +99,7 @@ open class AmneziaVpnService : VpnService() {
 
     private var connectionJob: Job? = null
     private var disconnectionJob: Job? = null
+    private var reconnectionJob: Job? = null
     private var trafficStatsUpdateJob: Job? = null
     // private var statisticsSendingJob: Job? = null
     private lateinit var networkState: NetworkState
@@ -524,7 +525,9 @@ open class AmneziaVpnService : VpnService() {
             disconnectionJob = null
 
             vpnProto?.protocol?.let { protocol ->
-                protocol.initialize(applicationContext, protocolState, ::onError)
+                protocol.initialize(applicationContext, protocolState, ::onError) {
+                    mainScope.launch { reconnect() }
+                }
                 protocol.startVpn(config, Builder(), ::protect)
             }
         }
@@ -558,15 +561,19 @@ open class AmneziaVpnService : VpnService() {
 
     @MainThread
     private fun reconnect() {
-        if (!isConnected) return
+        // a reconnect that never got a handshake may be retried
+        if (!isConnected && protocolState.value != RECONNECTING) return
 
         Log.d(TAG, "Reconnect VPN")
 
         protocolState.value = RECONNECTING
 
+        val previousReconnectionJob = reconnectionJob
         connectionJob = connectionScope.launch {
+            previousReconnectionJob?.cancelAndJoin()
             vpnProto?.protocol?.reconnectVpn(Builder(), ::protect)
         }
+        reconnectionJob = connectionJob
     }
 
     /**
