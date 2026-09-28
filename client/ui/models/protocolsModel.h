@@ -30,6 +30,7 @@ public:
         IsTelemtRole,
         IsDnsttRole,
         IsOlcrtcRole,
+        IsTProxyRole,
     };
 
     explicit ProtocolsModel(QObject *parent = nullptr);

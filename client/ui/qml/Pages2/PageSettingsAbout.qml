@@ -14,6 +14,18 @@ import "../Components"
 PageType {
     id: root
 
+    Connections {
+        target: UpdateController
+
+        function onUpdateNotFound() {
+            PageController.showNotificationMessage(qsTr("You have the latest version of AmneziaVPN"))
+        }
+
+        function onUpdateCheckFailed() {
+            PageController.showNotificationMessage(qsTr("Failed to check for updates"))
+        }
+    }
+
     BackButtonType {
         id: backButton
 
@@ -138,38 +150,23 @@ PageType {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: 8
                 Layout.bottomMargin: 16
-                implicitHeight: 32
+                implicitHeight: 48
 
-                defaultColor: AmneziaStyle.color.transparent
-                hoveredColor: AmneziaStyle.color.translucentWhite
-                pressedColor: AmneziaStyle.color.sheerWhite
-                disabledColor: AmneziaStyle.color.mutedGray
-                textColor: AmneziaStyle.color.goldenApricot
+                defaultColor: AmneziaStyle.color.surfaceBase
+                hoveredColor: AmneziaStyle.color.surfaceHovered
+                pressedColor: AmneziaStyle.color.surfacePressed
+                disabledColor: AmneziaStyle.color.surfaceBase
+                textColor: AmneziaStyle.color.surfaceInverse
+                borderWidth: 1
+                borderColor: AmneziaStyle.color.borderSoft
 
-                text: qsTr("Check for updates")
+                enabled: !UpdateController.isCheckRunning
 
-                // Fork: checks our GitHub releases; a found update opens the changelog drawer.
+                text: UpdateController.isCheckRunning ? qsTr("Checking...") : qsTr("Check for updates")
+
+                // Fork: checks our GitHub releases (ForkUpdateController); a found update opens PageUpdate.
                 clickedFunc: function() {
-                    checkUpdatesButton.enabled = false
                     UpdateController.checkForUpdates()
-                }
-
-                Connections {
-                    target: UpdateController
-
-                    function onUpdateFound() {
-                        checkUpdatesButton.enabled = true
-                    }
-
-                    function onNoUpdateFound() {
-                        checkUpdatesButton.enabled = true
-                        PageController.showNotificationMessage(qsTr("You are using the latest version"))
-                    }
-
-                    function onUpdateCheckFailed() {
-                        checkUpdatesButton.enabled = true
-                        PageController.showNotificationMessage(qsTr("Failed to check for updates. Try again after connecting to VPN"))
-                    }
                 }
             }
 
@@ -213,7 +210,7 @@ PageType {
         readonly property string description: qsTr("To discuss features")
         readonly property string imageSource: "qrc:/images/controls/telegram.svg"
         readonly property var handler: function() {
-            Qt.openUrlExternally(qsTr("https://t.me/amnezia_vpn_en"))
+            Qt.openUrlExternally(qsTr("https://telegram.me/amnezia_vpn_en"))
         }
     }
 

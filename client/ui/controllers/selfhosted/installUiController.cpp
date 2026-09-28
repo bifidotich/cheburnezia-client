@@ -55,6 +55,7 @@ InstallUiController::InstallUiController(InstallController *installController,
                                          TelemtConfigModel *telemtConfigModel,
                                          DnsttConfigModel *dnsttConfigModel,
                                          OlcrtcConfigModel *olcrtcConfigModel,
+                                         TProxyConfigModel *tProxyConfigModel,
                                          ConnectionController *connectionController,
                                          QObject *parent)
     : QObject(parent),
@@ -77,6 +78,7 @@ InstallUiController::InstallUiController(InstallController *installController,
       m_telemtConfigModel(telemtConfigModel),
       m_dnsttConfigModel(dnsttConfigModel),
       m_olcrtcConfigModel(olcrtcConfigModel),
+      m_tProxyConfigModel(tProxyConfigModel),
       m_connectionController(connectionController)
 {
     connect(m_installController, &InstallController::configValidated, this, &InstallUiController::configValidated);
@@ -89,6 +91,11 @@ InstallUiController::~InstallUiController()
 
 void InstallUiController::install(DockerContainer container, int port, TransportProto transportProto, const QString &serverId)
 {
+    if (container == DockerContainer::TProxy && m_tProxyConfigModel) {
+        m_installController->setTProxyInstallHints(m_tProxyConfigModel->getHostname(),
+                                                   m_tProxyConfigModel->getAcmeEmail());
+    }
+
     const bool isNewServer = serverId.isEmpty();
     
     ServerCredentials serverCredentials;
@@ -261,6 +268,10 @@ bool InstallUiController::buildContainerConfigFromModel(int containerIndex, int 
         containerConfig.protocolConfig = m_telemtConfigModel->getProtocolConfig();
         break;
     }
+    case Proto::TProxy: {
+        containerConfig.protocolConfig = m_tProxyConfigModel->getProtocolConfig();
+        break;
+    }
     case Proto::Olcrtc: {
         containerConfig.protocolConfig = m_olcrtcConfigModel->getProtocolConfig();
         break;
@@ -316,10 +327,12 @@ void InstallUiController::updateServerConfig(const QString &serverId, int contai
     ContainerConfig oldContainerConfig = m_serversController->getContainerConfig(serverId, container);
 
     const bool asyncUpdate = container == DockerContainer::MtProxy || container == DockerContainer::Telemt
+            || container == DockerContainer::TProxy
             || container == DockerContainer::Xray || container == DockerContainer::SSXray;
 
     if (asyncUpdate) {
-        const bool emitBusy = container == DockerContainer::MtProxy || container == DockerContainer::Telemt;
+        const bool emitBusy = container == DockerContainer::MtProxy || container == DockerContainer::Telemt
+                || container == DockerContainer::TProxy;
         if (emitBusy)
             emit serverIsBusy(true);
         auto *watcher = new QFutureWatcher<ErrorCode>(this);
@@ -370,7 +383,8 @@ void InstallUiController::updateServerConfig(const QString &serverId, int contai
 void InstallUiController::setContainerEnabled(const QString &serverId, int containerIndex, bool enabled)
 {
     const DockerContainer container = static_cast<DockerContainer>(containerIndex);
-    if (container != DockerContainer::MtProxy && container != DockerContainer::Telemt) {
+    if (container != DockerContainer::MtProxy && container != DockerContainer::Telemt
+            && container != DockerContainer::TProxy) {
         return;
     }
 
@@ -401,7 +415,8 @@ void InstallUiController::setContainerEnabled(const QString &serverId, int conta
 void InstallUiController::refreshContainerStatus(const QString &serverId, int containerIndex)
 {
     const DockerContainer container = static_cast<DockerContainer>(containerIndex);
-    if (container != DockerContainer::MtProxy && container != DockerContainer::Telemt) {
+    if (container != DockerContainer::MtProxy && container != DockerContainer::Telemt
+            && container != DockerContainer::TProxy) {
         return;
     }
 
@@ -457,7 +472,8 @@ void InstallUiController::refreshContainerDiagnostics(const QString &serverId, i
 void InstallUiController::fetchContainerSecret(const QString &serverId, int containerIndex)
 {
     const DockerContainer container = static_cast<DockerContainer>(containerIndex);
-    if (container != DockerContainer::MtProxy && container != DockerContainer::Telemt) {
+    if (container != DockerContainer::MtProxy && container != DockerContainer::Telemt
+            && container != DockerContainer::TProxy) {
         return;
     }
 
@@ -725,6 +741,7 @@ void InstallUiController::updateProtocolConfigModel(const QString &serverId, int
     case Proto::Telemt: updateIfPresent(m_telemtConfigModel, containerConfig.getTelemtProtocolConfig()); break;
     case Proto::Dnstt: updateIfPresent(m_dnsttConfigModel, containerConfig.getDnsttProtocolConfig()); break;
     case Proto::Olcrtc: updateIfPresent(m_olcrtcConfigModel, containerConfig.getOlcrtcProtocolConfig()); break;
+    case Proto::TProxy: updateIfPresent(m_tProxyConfigModel, containerConfig.getTProxyProtocolConfig()); break;
 #ifdef Q_OS_WINDOWS
     case Proto::Ikev2: updateIfPresent(m_ikev2ConfigModel, containerConfig.getIkev2ProtocolConfig()); break;
 #endif

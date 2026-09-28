@@ -55,6 +55,7 @@ public:
         IsTelemtRole,
         IsDnsttRole,
         IsOlcrtcRole,
+        IsTProxyRole,
     };
     
     Q_INVOKABLE void openContainerSettings(int containerIndex);

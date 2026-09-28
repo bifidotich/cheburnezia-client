@@ -77,6 +77,7 @@
 #include "ui/models/services/telemtConfigModel.h"
 #include "ui/models/protocols/dnsttConfigModel.h"
 #include "ui/models/protocols/olcrtcConfigModel.h"
+#include "ui/models/services/tProxyConfigModel.h"
 
 #include "ui/models/ipSplitTunnelingModel.h"
 #include "ui/models/newsModel.h"
@@ -99,6 +100,7 @@ public:
 
     PageController* pageController() const;
     void setQmlRoot();
+    void checkForAppUpdates();
 
     void openConnectionByIndex(int serverIndex);
     void importConfigFromData(const QString &data);
@@ -233,6 +235,7 @@ private:
     TelemtConfigModel* m_telemtConfigModel;
     DnsttConfigModel* m_dnsttConfigModel;
     OlcrtcConfigModel* m_olcrtcConfigModel;
+    TProxyConfigModel* m_tProxyConfigModel;
 
     CoreSignalHandlers* m_signalHandlers;
 };

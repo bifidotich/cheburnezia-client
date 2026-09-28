@@ -11,6 +11,7 @@
 #include <QUrl>
 
 #include "amneziaApplication.h"
+#include "core/utils/appUiConfig.h"
 #include "logger.h"
 #include "version.h"
 
@@ -37,19 +38,9 @@ ForkUpdateController::ForkUpdateController(SecureAppSettingsRepository* appSetti
 {
 }
 
-QString ForkUpdateController::getRawChangelogText() const
+bool ForkUpdateController::isStoreUpdate() const
 {
-    return m_changelogText;
-}
-
-QString ForkUpdateController::getReleaseDate() const
-{
-    return m_releaseDate;
-}
-
-QString ForkUpdateController::getVersion() const
-{
-    return m_version;
+    return false;
 }
 
 int ForkUpdateController::currentBuild()
@@ -66,10 +57,14 @@ int ForkUpdateController::buildFromTag(const QString &tag)
 
 void ForkUpdateController::checkForUpdates()
 {
-    if (m_checkRunning) {
+#if !CLIENT_ENABLE_APP_UPDATES
+    return;
+#endif
+
+    if (isUpdateCheckRunning()) {
         return;
     }
-    m_checkRunning = true;
+    setUpdateCheckRunning(true);
 
     const QUrl url(QStringLiteral("https://api.github.com/repos/%1/releases/latest").arg(CHEBURNEZIA_UPDATE_REPO));
 
@@ -83,7 +78,7 @@ void ForkUpdateController::checkForUpdates()
     QNetworkReply *reply = amnApp->networkManager()->get(req);
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
-        m_checkRunning = false;
+        setUpdateCheckRunning(false);
 
         if (reply->error() != QNetworkReply::NoError) {
             logger.error() << "Release check failed:" << reply->errorString() << "HTTP status:"
@@ -108,35 +103,83 @@ void ForkUpdateController::handleReleaseReply(const QByteArray &data)
 
     logger.info() << "Latest release" << tag << "current build" << currentBuild();
     if (remoteBuild <= currentBuild()) {
-        emit noUpdateFound();
+        emit updateNotFound();
         return;
     }
 
     m_version = tag.startsWith('v') ? tag.mid(1) : tag;
-    m_changelogText = release.value("body").toString();
     m_releaseDate = QDateTime::fromString(release.value("published_at").toString(), Qt::ISODate)
                             .toLocalTime().date().toString(Qt::ISODate);
 
+    // Release notes are Markdown: list items go to the changelog sections by their
+    // conventional-commit prefix, the remaining prose becomes the description.
+    static const QRegularExpression bulletRe(QStringLiteral("^\\s*[-*]\\s+(.*)$"));
+    static const QRegularExpression prefixRe(QStringLiteral("^(\\w+)(\\([^)]*\\))?!?:\\s*"));
+    // "--generate-notes" appends " by @author in <PR url>" to every item.
+    static const QRegularExpression authorRe(QStringLiteral("\\s+by @\\S+ in \\S+$"));
+
+    QStringList description;
+    m_newFeatures.clear();
+    m_improvements.clear();
+    m_bugFixes.clear();
+    m_tags.clear();
+    const QStringList lines = release.value("body").toString().split('\n');
+    for (const QString &rawLine : lines) {
+        const QString line = rawLine.trimmed();
+        if (line.isEmpty() || line.startsWith('#') || line.startsWith(QLatin1String("**Full Changelog**"))) {
+            continue;
+        }
+
+        const auto bullet = bulletRe.match(line);
+        if (!bullet.hasMatch()) {
+            description.append(line);
+            continue;
+        }
+
+        QString item = bullet.captured(1);
+        item.remove(authorRe);
+        const auto prefix = prefixRe.match(item);
+        const QString type = prefix.hasMatch() ? prefix.captured(1).toLower() : QString();
+        if (prefix.hasMatch()) {
+            item = item.mid(prefix.capturedLength());
+        }
+        if (item.isEmpty()) {
+            continue;
+        }
+        item[0] = item[0].toUpper();
+
+        if (type == QLatin1String("feat")) {
+            m_newFeatures.append(item);
+        } else if (type == QLatin1String("fix")) {
+            m_bugFixes.append(item);
+        } else {
+            m_improvements.append(item);
+        }
+    }
+    m_description = description.join('\n');
+
     // Without an asset for this platform the release page is the best we can offer.
-    m_downloadUrl = release.value("html_url").toString();
+    m_releasePageUrl = release.value("html_url").toString();
 #if defined(Q_OS_ANDROID)
     for (const QJsonValue &asset : release.value("assets").toArray()) {
         const QJsonObject obj = asset.toObject();
         if (obj.value("name").toString().endsWith(kAssetSuffix)) {
-            m_downloadUrl = obj.value("browser_download_url").toString();
+            m_releasePageUrl = obj.value("browser_download_url").toString();
             break;
         }
     }
 #endif
 
+    setUpdateState(UpdateState::State::Idle);
     emit updateFound();
 }
 
-void ForkUpdateController::runInstaller()
+void ForkUpdateController::startUpdate()
 {
-    if (m_downloadUrl.isEmpty()) {
+    if (m_releasePageUrl.isEmpty()) {
         logger.error() << "Download URL is empty";
+        setUpdateState(UpdateState::State::DownloadError);
         return;
     }
-    QDesktopServices::openUrl(QUrl(m_downloadUrl));
+    QDesktopServices::openUrl(QUrl(m_releasePageUrl));
 }

@@ -26,6 +26,7 @@
 #include "core/models/protocols/telemtProtocolConfig.h"
 #include "core/models/protocols/dnsttProtocolConfig.h"
 #include "core/models/protocols/olcrtcProtocolConfig.h"
+#include "core/models/protocols/tProxyProtocolConfig.h"
 
 namespace amnezia
 {
@@ -42,6 +43,7 @@ struct ProtocolConfig {
         Socks5ProxyProtocolConfig,
         MtProxyProtocolConfig,
         TelemtProtocolConfig,
+        TProxyProtocolConfig,
         Ikev2ProtocolConfig,
         TorProtocolConfig,
         DnsProtocolConfig,

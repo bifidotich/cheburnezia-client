@@ -18,6 +18,7 @@
 #include <QtQuick/QQuickWindow>  
 #include <QWindow>     
 
+#include "core/controllers/updateController.h"
 #include "core/protocols/qmlRegisterProtocols.h"
 #include "logger.h"
 #include "ui/controllers/qml/pageController.h"
@@ -169,9 +170,6 @@ void AmneziaApplication::init()
 
     m_coreController.reset(new CoreController(m_vpnConnection, m_settings, m_engine));
 
-    m_marketplaceUpdateController.reset(new MarketplaceUpdateController());
-    m_marketplaceUpdateController->start();
-
     m_engine->addImportPath(QStringLiteral(APP_QML_IMPORT_PATH));
 
     if (m_parser.isSet(m_optImport)) {
@@ -186,6 +184,10 @@ void AmneziaApplication::init()
     m_engine->load(url);
 
     m_coreController->setQmlRoot();
+
+#if CLIENT_ENABLE_APP_UPDATES
+    m_coreController->checkForAppUpdates();
+#endif
 
 #ifdef Q_OS_WIN //TODO
     if (m_parser.isSet(m_optAutostart))
@@ -255,6 +257,7 @@ void AmneziaApplication::registerTypes()
     amnezia::declareQmlProtocolEnum();
     Vpn::declareQmlVpnConnectionStateEnum();
     PageLoader::declareQmlPageEnum();
+    UpdateState::declareQmlUpdateStateEnum();
 }
 
 void AmneziaApplication::loadFonts()

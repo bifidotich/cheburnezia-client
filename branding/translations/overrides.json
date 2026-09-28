@@ -36,6 +36,10 @@
         },
         {
             "context": "PageSettingsAbout",
+            "source": "You have the latest version of AmneziaVPN"
+        },
+        {
+            "context": "PageSettingsAbout",
             "source": "Discover the source code",
             "en": "Source code and bug reports",
             "ru_RU": "Исходный код и сообщения об ошибках"

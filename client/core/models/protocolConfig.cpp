@@ -15,6 +15,7 @@
 #include "core/models/protocols/telemtProtocolConfig.h"
 #include "core/models/protocols/dnsttProtocolConfig.h"
 #include "core/models/protocols/olcrtcProtocolConfig.h"
+#include "core/models/protocols/tProxyProtocolConfig.h"
 
 namespace amnezia
 {
@@ -52,6 +53,8 @@ Proto ProtocolConfig::type() const
             return Proto::Dnstt;
         } else if constexpr (std::is_same_v<T, OlcrtcProtocolConfig>) {
             return Proto::Olcrtc;
+        } else if constexpr (std::is_same_v<T, TProxyProtocolConfig>) {
+            return Proto::TProxy;
         }
         return Proto::Unknown;
     }, data);
@@ -83,6 +86,8 @@ QString ProtocolConfig::port() const
             return arg.port.isEmpty() ? QString(protocols::mtProxy::defaultPort) : arg.port;
         } else if constexpr (std::is_same_v<T, TelemtProtocolConfig>) {
             return arg.port.isEmpty() ? QString(protocols::telemt::defaultPort) : arg.port;
+        } else if constexpr (std::is_same_v<T, TProxyProtocolConfig>) {
+            return arg.port.isEmpty() ? QString(protocols::tProxy::defaultPort) : arg.port;
         }
         return QString();
     }, data);
@@ -109,6 +114,8 @@ QString ProtocolConfig::transportProto() const
         } else if constexpr (std::is_same_v<T, MtProxyProtocolConfig>) {
             return QStringLiteral("tcp");
         } else if constexpr (std::is_same_v<T, TelemtProtocolConfig>) {
+            return QStringLiteral("tcp");
+        } else if constexpr (std::is_same_v<T, TProxyProtocolConfig>) {
             return QStringLiteral("tcp");
         }
         return QString();
@@ -353,6 +360,8 @@ ProtocolConfig ProtocolConfig::fromJson(const QJsonObject& json, Proto type)
         return ProtocolConfig{DnsttProtocolConfig::fromJson(json)};
     case Proto::Olcrtc:
         return ProtocolConfig{OlcrtcProtocolConfig::fromJson(json)};
+    case Proto::TProxy:
+        return ProtocolConfig{TProxyProtocolConfig::fromJson(json)};
     default:
         return ProtocolConfig{AwgProtocolConfig{}};
     }

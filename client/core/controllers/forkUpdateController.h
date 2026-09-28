@@ -13,9 +13,8 @@ class ForkUpdateController : public UpdateController
 public:
     explicit ForkUpdateController(SecureAppSettingsRepository* appSettingsRepository, QObject *parent = nullptr);
 
-    QString getRawChangelogText() const override;
-    QString getReleaseDate() const override;
-    QString getVersion() const override;
+    // The fork is never installed from a store, even when Android reports Play.
+    bool isStoreUpdate() const override;
 
     static int currentBuild();
     static int buildFromTag(const QString &tag);
@@ -24,16 +23,10 @@ public slots:
     void checkForUpdates() override;
     // Opens the release asset for this platform (the APK on Android) in the
     // browser; the system installer takes over from the download.
-    void runInstaller() override;
+    void startUpdate() override;
 
 private:
     void handleReleaseReply(const QByteArray &data);
-
-    QString m_version;
-    QString m_changelogText;
-    QString m_releaseDate;
-    QString m_downloadUrl;
-    bool m_checkRunning = false;
 };
 
 #endif // FORKUPDATECONTROLLER_H

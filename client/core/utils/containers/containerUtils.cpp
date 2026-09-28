@@ -81,6 +81,7 @@ QMap<DockerContainer, QString> ContainerUtils::containerHumanNames()
              { DockerContainer::Telemt, QObject::tr("Telemt (Telegram)") },
              { DockerContainer::Dnstt, "DNSTT" },
              { DockerContainer::Olcrtc, "olcRTC" },
+             { DockerContainer::TProxy, QObject::tr("TProxy (Telegram WEB)") },
     };
 }
 
@@ -123,6 +124,8 @@ QMap<DockerContainer, QString> ContainerUtils::containerDescriptions()
                 QObject::tr("DNS tunnel with Noise NK encryption and DoH/DoT transport") },
              { DockerContainer::Olcrtc,
                 QObject::tr("Encrypted tunnel disguised as a WebRTC video call over a legal meeting service") },
+             { DockerContainer::TProxy,
+               QObject::tr("Telegram WEB proxy (tproxy-server)") },
     };
 }
 
@@ -223,6 +226,10 @@ QMap<DockerContainer, QString> ContainerUtils::containerDetailedDescriptions()
                       "* Carries TCP only: UDP applications such as QUIC, VoIP and games are not "
                       "supported, and DNS itself is relayed over TCP\n"
                       "* Requires an olcRTC server peer and a room on the chosen provider") },
+        { DockerContainer::TProxy,
+          QObject::tr("Telegram WEB proxy. Clients connect over HTTPS to a hostname; "
+                      "the server relays traffic to official MTProxy. Requires a domain, "
+                      "ports 80 and 443, and a WEB-capable Telegram app.") },
     };
 }
 
@@ -256,6 +263,7 @@ Proto ContainerUtils::defaultProtocol(DockerContainer c)
     case DockerContainer::Telemt: return Proto::Telemt;
     case DockerContainer::Dnstt: return Proto::Dnstt;
     case DockerContainer::Olcrtc: return Proto::Olcrtc;
+    case DockerContainer::TProxy: return Proto::TProxy;
     default: return Proto::Unknown;
     }
 }
@@ -287,6 +295,7 @@ bool ContainerUtils::isSupportedByCurrentPlatform(DockerContainer c)
     case DockerContainer::SSXray: return true;
     case DockerContainer::MtProxy: return true;
     case DockerContainer::Telemt: return true;
+    case DockerContainer::TProxy: return true;
     default:
         return false;
     }
@@ -304,6 +313,7 @@ bool ContainerUtils::isSupportedByCurrentPlatform(DockerContainer c)
     case DockerContainer::SSXray: return true;
     case DockerContainer::MtProxy: return true;
     case DockerContainer::Telemt: return true;
+    case DockerContainer::TProxy: return true;
     default:
         return false;
     }
@@ -328,6 +338,7 @@ bool ContainerUtils::isSupportedByCurrentPlatform(DockerContainer c)
     case DockerContainer::Telemt: return true;
     case DockerContainer::Dnstt: return true;
     case DockerContainer::Olcrtc: return true;
+    case DockerContainer::TProxy: return true;
     default: return false;
     }
 
@@ -398,6 +409,7 @@ bool ContainerUtils::isShareable(DockerContainer container)
     case DockerContainer::Socks5Proxy: return false;
     case DockerContainer::MtProxy: return false;
     case DockerContainer::Telemt: return false;
+    case DockerContainer::TProxy: return false;
     default: return true;
     }
 }
@@ -433,6 +445,7 @@ int ContainerUtils::installPageOrder(DockerContainer container)
     case DockerContainer::SSXray: return 8;
     case DockerContainer::MtProxy:
     case DockerContainer::Telemt:
+    case DockerContainer::TProxy:
         return 20;
     default: return 0;
     }

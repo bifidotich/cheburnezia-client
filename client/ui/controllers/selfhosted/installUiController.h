@@ -33,6 +33,7 @@
 #include "ui/models/services/telemtConfigModel.h"
 #include "ui/models/protocols/dnsttConfigModel.h"
 #include "ui/models/protocols/olcrtcConfigModel.h"
+#include "ui/models/services/tProxyConfigModel.h"
 
 class InstallUiController : public QObject
 {
@@ -57,6 +58,7 @@ public:
                                TelemtConfigModel* telemtConfigModel,
                                DnsttConfigModel* dnsttConfigModel,
                                OlcrtcConfigModel* olcrtcConfigModel,
+                               TProxyConfigModel* tProxyConfigModel,
                                ConnectionController* connectionController,
                                QObject *parent = nullptr);
     ~InstallUiController();
@@ -161,6 +163,7 @@ private:
     TelemtConfigModel* m_telemtConfigModel;
     DnsttConfigModel* m_dnsttConfigModel;
     OlcrtcConfigModel* m_olcrtcConfigModel;
+    TProxyConfigModel* m_tProxyConfigModel;
     ConnectionController* m_connectionController;
 
     ServerCredentials m_processedServerCredentials;

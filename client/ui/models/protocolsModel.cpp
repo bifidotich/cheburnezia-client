@@ -46,6 +46,7 @@ QHash<int, QByteArray> ProtocolsModel::roleNames() const
     roles[IsTelemtRole] = "isTelemt";
     roles[IsDnsttRole] = "isDnstt";
     roles[IsOlcrtcRole] = "isOlcrtc";
+    roles[IsTProxyRole] = "isTProxy";
 
     return roles;
 }
@@ -79,6 +80,7 @@ QVariant ProtocolsModel::data(const QModelIndex &index, int role) const
     case IsTelemtRole: return proto == Proto::Telemt;
     case IsDnsttRole: return proto == Proto::Dnstt;
     case IsOlcrtcRole: return proto == Proto::Olcrtc;
+    case IsTProxyRole: return proto == Proto::TProxy;
     case RawConfigRole:
         return getRawConfig();
     case IsClientProtocolExistsRole:
@@ -136,6 +138,7 @@ PageLoader::PageEnum ProtocolsModel::serverProtocolPage(Proto protocol) const
     case Proto::Telemt: return PageLoader::PageEnum::PageServiceTelemtSettings;
     case Proto::Dnstt: return PageLoader::PageEnum::PageProtocolDnsttSettings;
     case Proto::Olcrtc: return PageLoader::PageEnum::PageProtocolOlcrtcSettings;
+    case Proto::TProxy: return PageLoader::PageEnum::PageServiceTProxySettings;
     default: return PageLoader::PageEnum::PageProtocolOpenVpnSettings;
     }
 }

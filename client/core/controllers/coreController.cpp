@@ -113,6 +113,9 @@ void CoreController::initModels()
     m_telemtConfigModel = new TelemtConfigModel(this);
     setQmlContextProperty("TelemtConfigModel", m_telemtConfigModel);
 
+    m_tProxyConfigModel = new TProxyConfigModel(this);
+    setQmlContextProperty("TProxyConfigModel", m_tProxyConfigModel);
+
     m_dnsttConfigModel = new DnsttConfigModel(this);
     setQmlContextProperty("DnsttConfigModel", m_dnsttConfigModel);
 
@@ -191,7 +194,9 @@ void CoreController::initControllers()
                                                      m_ikev2ConfigModel,
 #endif
                                                      m_sftpConfigModel, m_socks5ConfigModel, m_mtProxyConfigModel, m_telemtConfigModel,
-                                                     m_dnsttConfigModel, m_olcrtcConfigModel, m_connectionController, this);
+                                                     m_dnsttConfigModel, m_olcrtcConfigModel,
+                                                     m_tProxyConfigModel,
+                                                     m_connectionController, this);
     setQmlContextProperty("InstallController", m_installUiController);
 
     m_importController = new ImportUiController(m_importCoreController, this);
@@ -296,10 +301,14 @@ void CoreController::initSignalHandlers()
         m_apiNewsUiController->fetchNews(false);
     }
 
-    // Fork: Android gets its updates from GitHub releases too, not from a store.
-    #if !defined(Q_OS_IOS)
-        m_updateController->checkForUpdates();
-    #endif    
+}
+
+void CoreController::checkForAppUpdates()
+{
+    if (!m_appSettingsRepository->isAutoUpdateCheckEnabled()) {
+        return;
+    }
+    m_updateController->checkForUpdates();
 }
 
 void CoreController::updateTranslator(const QLocale &locale)

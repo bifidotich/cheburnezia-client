@@ -79,6 +79,7 @@ QVariant ContainersModel::data(const QModelIndex &index, int role) const
     case IsDnsttRole: return container == DockerContainer::Dnstt;
     case IsOlcrtcRole: return container == DockerContainer::Olcrtc;
     case IsTelemtRole: return container == DockerContainer::Telemt;
+    case IsTProxyRole: return container == DockerContainer::TProxy;
     case InstallPageOrderRole: return ContainerUtils::installPageOrder(container);
     }
 
@@ -195,5 +196,6 @@ QHash<int, QByteArray> ContainersModel::roleNames() const
     roles[IsDnsttRole] = "isDnstt";
     roles[IsOlcrtcRole] = "isOlcrtc";
     roles[IsTelemtRole] = "isTelemt";
+    roles[IsTProxyRole] = "isTProxy";
     return roles;
 }
