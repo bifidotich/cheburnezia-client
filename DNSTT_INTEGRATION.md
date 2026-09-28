@@ -127,7 +127,7 @@ MTU TUN-интерфейса — обычные 1500. Payload-MTU туннеля
 wsl -u root bash /mnt/d/projects/amnezia-client/deploy/build_android_wsl.sh
 ```
 
-Скрипт выполняет: CMake-сборку (включая `libdnstt.so`) → `patch_libs_xml.py` → `gradlew assembleRelease` → `zipalign` → `apksigner`. Результат: `deploy/build/AmneziaVPN-dnstt.apk`.
+Скрипт выполняет: CMake-сборку (включая `libdnstt.so`) → `patch_libs_xml.py` → `gradlew assembleRelease` → `zipalign` → `apksigner`. Результат: `deploy/build/Cheburnezia.apk` (имя меняется переменной `APK_NAME`).
 
 `deploy/patch_libs_xml.py` вносит все `.so` QML-плагинов в `res/values/libs.xml`: с Android 10 bionic блокирует `dlopen()` по пути для библиотек, не загруженных через `System.loadLibrary`. Скрипт принимает каталог сборки аргументом и обрабатывает все ABI.
 

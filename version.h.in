@@ -13,4 +13,8 @@
 #define SERVICE_NAME            "@CLIENT_SERVICE_NAME@"
 #define ORGANIZATION_NAME       "@CLIENT_ORGANIZATION_NAME@"
 
+// Cheburnezia fork, set in branding/cheburnezia.cmake
+#define CHEBURNEZIA_BUILD       "@CHEBURNEZIA_BUILD@"
+#define CHEBURNEZIA_UPDATE_REPO "@CHEBURNEZIA_UPDATE_REPO@"
+
 #endif  // VERSION_H

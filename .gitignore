@@ -158,3 +158,6 @@ deploy/*.log
 # Personal dnstt research lab: DoH-resolver finder + tunnel tester, result logs,
 # and the config ledger (contains server keys/endpoints). Never tracked.
 dnstt-lab/
+
+# Release signing key (never commit)
+/keystore/

@@ -17,10 +17,16 @@ export PATH="/root/go/bin:/usr/local/go/bin:$ANDROID_HOME/cmdline-tools/latest/b
 
 ABI=${ABI:-arm64-v8a}
 BUILD_TOOLS=${BUILD_TOOLS:-$ANDROID_HOME/build-tools/35.0.0}
-KEYSTORE=${KEYSTORE:-/opt/debug.keystore}
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# Release signing key, kept in keystore/ (gitignored). Every published APK must
+# be signed with this same key, otherwise Android refuses to install it over
+# the previous version. Back up both files: losing them means users have to
+# uninstall the app to get updates.
+KEYSTORE=${KEYSTORE:-${ROOT_DIR}/keystore/cheburnezia-release.jks}
+KEYSTORE_ENV=${KEYSTORE_ENV:-${ROOT_DIR}/keystore/keystore.env}
 ANDROID_BUILD_DIR="${ROOT_DIR}/deploy/build/client/android-build"
 cd "${ROOT_DIR}"
 
@@ -32,14 +38,18 @@ command -v go >/dev/null || { echo "go is required to build libdnstt.so" >&2; ex
 # The gradle project signs the release variants itself and fails :packageOssRelease
 # outright when no keystore is configured, so the keystore has to exist and be
 # exported before build.sh reaches androiddeployqt.
-if [ ! -f "${KEYSTORE}" ]; then
-    keytool -genkey -v -keystore "${KEYSTORE}" -storepass android -alias androiddebugkey \
-        -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
-        -dname "CN=Android Debug,O=Android,C=US"
+if [ ! -f "${KEYSTORE}" ] || [ ! -f "${KEYSTORE_ENV}" ]; then
+    echo "Release keystore not found: ${KEYSTORE} / ${KEYSTORE_ENV}" >&2
+    echo "Restore both files from backup. Generating a new key breaks updates for installed apps." >&2
+    exit 1
 fi
+# shellcheck source=/dev/null
+. "${KEYSTORE_ENV}"
+: "${KEYSTORE_ALIAS:?KEYSTORE_ALIAS missing in ${KEYSTORE_ENV}}"
+: "${KEYSTORE_PASS:?KEYSTORE_PASS missing in ${KEYSTORE_ENV}}"
 export QT_ANDROID_KEYSTORE_PATH="${KEYSTORE}"
-export QT_ANDROID_KEYSTORE_ALIAS=androiddebugkey
-export QT_ANDROID_KEYSTORE_STORE_PASS=android
+export QT_ANDROID_KEYSTORE_ALIAS="${KEYSTORE_ALIAS}"
+export QT_ANDROID_KEYSTORE_STORE_PASS="${KEYSTORE_PASS}"
 
 echo "=== 1. Building C++ core, libdnstt.so and Qt resources ==="
 # -f wipes deploy/build. Without it CMakeCache keeps the previous run's
@@ -72,11 +82,12 @@ if [ -z "${UNSIGNED_APK:-}" ]; then
 fi
 echo "Packaging ${UNSIGNED_APK}"
 
-ALIGNED_APK="$(mktemp -u /tmp/AmneziaVPN-aligned-XXXXXX.apk)"
-FINAL_APK="${ROOT_DIR}/deploy/build/AmneziaVPN-dnstt.apk"
+ALIGNED_APK="$(mktemp -u /tmp/Cheburnezia-aligned-XXXXXX.apk)"
+FINAL_APK="${ROOT_DIR}/deploy/build/${APK_NAME:-Cheburnezia}.apk"
 
 "${BUILD_TOOLS}/zipalign" -f -p 4 "${UNSIGNED_APK}" "${ALIGNED_APK}"
-"${BUILD_TOOLS}/apksigner" sign --ks "${KEYSTORE}" --ks-pass pass:android --key-pass pass:android \
+"${BUILD_TOOLS}/apksigner" sign --ks "${KEYSTORE}" --ks-key-alias "${KEYSTORE_ALIAS}" \
+    --ks-pass env:QT_ANDROID_KEYSTORE_STORE_PASS --key-pass env:QT_ANDROID_KEYSTORE_STORE_PASS \
     --out "${FINAL_APK}" "${ALIGNED_APK}"
 rm -f "${ALIGNED_APK}"
 
