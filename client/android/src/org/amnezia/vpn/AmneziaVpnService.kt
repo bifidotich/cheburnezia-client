@@ -623,9 +623,11 @@ open class AmneziaVpnService : VpnService() {
         }
 
     companion object {
+        // processName is the ":suffix" from android:process; the real process name
+        // is prefixed with the applicationId, which the fork changes.
         fun isRunning(context: Context, processName: String): Boolean =
             context.getSystemService<ActivityManager>()!!.runningAppProcesses.any {
-                it.processName == processName && it.importance <= IMPORTANCE_FOREGROUND_SERVICE
+                it.processName == context.packageName + processName && it.importance <= IMPORTANCE_FOREGROUND_SERVICE
             }
     }
 }
