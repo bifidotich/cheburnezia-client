@@ -148,8 +148,28 @@ PageType {
 
                 text: qsTr("Check for updates")
 
+                // Fork: checks our GitHub releases; a found update opens the changelog drawer.
                 clickedFunc: function() {
-                    Qt.openUrlExternally("https://github.com/amnezia-vpn/desktop-client/releases/latest")
+                    checkUpdatesButton.enabled = false
+                    UpdateController.checkForUpdates()
+                }
+
+                Connections {
+                    target: UpdateController
+
+                    function onUpdateFound() {
+                        checkUpdatesButton.enabled = true
+                    }
+
+                    function onNoUpdateFound() {
+                        checkUpdatesButton.enabled = true
+                        PageController.showNotificationMessage(qsTr("You are using the latest version"))
+                    }
+
+                    function onUpdateCheckFailed() {
+                        checkUpdatesButton.enabled = true
+                        PageController.showNotificationMessage(qsTr("Failed to check for updates. Try again after connecting to VPN"))
+                    }
                 }
             }
 

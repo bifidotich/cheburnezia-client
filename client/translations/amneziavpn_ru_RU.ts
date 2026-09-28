@@ -3215,6 +3215,16 @@ Create one from the current settings.</source>
 <context>
     <name>PageSettingsAbout</name>
     <message>
+        <location filename="../ui/qml/Pages2/PageSettingsAbout.qml" line="168"/>
+        <source>You are using the latest version</source>
+        <translation>У вас последняя версия</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/Pages2/PageSettingsAbout.qml" line="173"/>
+        <source>Failed to check for updates. Try again after connecting to VPN</source>
+        <translation>Не удалось проверить обновления. Попробуйте ещё раз после подключения к VPN</translation>
+    </message>
+    <message>
         <location filename="../ui/qml/Pages2/PageSettingsAbout.qml" line="61"/>
         <source>Support Amnezia</source>
         <translation>Поддержите Amnezia</translation>

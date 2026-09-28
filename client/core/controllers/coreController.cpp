@@ -165,7 +165,8 @@ void CoreController::initCoreControllers()
     m_subscriptionController = new SubscriptionController(m_serversRepository, m_appSettingsRepository);
     m_storePurchaseController = new StorePurchaseController(m_serversRepository, m_appSettingsRepository);
     m_newsController = new NewsController(m_appSettingsRepository, m_serversRepository);
-    m_updateController = new UpdateController(m_appSettingsRepository, this);
+    // Fork: updates come from our GitHub releases, not the Amnezia gateway.
+    m_updateController = new ForkUpdateController(m_appSettingsRepository, this);
     
     m_installController = new InstallController(m_serversRepository, m_appSettingsRepository, this);
     m_exportController = new ExportController(m_serversRepository, m_appSettingsRepository, this);
@@ -295,7 +296,8 @@ void CoreController::initSignalHandlers()
         m_apiNewsUiController->fetchNews(false);
     }
 
-    #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+    // Fork: Android gets its updates from GitHub releases too, not from a store.
+    #if !defined(Q_OS_IOS)
         m_updateController->checkForUpdates();
     #endif    
 }

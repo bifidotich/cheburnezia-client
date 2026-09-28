@@ -12,17 +12,22 @@ class UpdateController : public QObject
     Q_OBJECT
 public:
     explicit UpdateController(SecureAppSettingsRepository* appSettingsRepository, QObject *parent = nullptr);
+    virtual ~UpdateController() = default;
 
-    QString getRawChangelogText() const;
-    QString getReleaseDate() const;
-    QString getVersion() const;
+    // Virtual so the fork can swap the update source (ForkUpdateController).
+    virtual QString getRawChangelogText() const;
+    virtual QString getReleaseDate() const;
+    virtual QString getVersion() const;
 
 public slots:
-    void checkForUpdates();
-    void runInstaller();
+    virtual void checkForUpdates();
+    virtual void runInstaller();
 
 signals:
     void updateFound();
+    // Emitted only by ForkUpdateController, for the manual check button.
+    void noUpdateFound();
+    void updateCheckFailed();
 
 private:
     void finishUpdateCheck();

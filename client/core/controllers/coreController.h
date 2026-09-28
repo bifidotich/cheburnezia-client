@@ -43,6 +43,7 @@
 #include "core/controllers/settingsController.h"
 #include "core/controllers/connectionController.h"
 #include "core/controllers/updateController.h"
+#include "core/controllers/forkUpdateController.h"
 
 #include "core/repositories/secureServersRepository.h"
 #include "core/repositories/secureAppSettingsRepository.h"

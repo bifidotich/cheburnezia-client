@@ -1,10 +1,26 @@
 #include "updateUiController.h"
 
+#include <utility>
+
 UpdateUiController::UpdateUiController(UpdateController* updateController, QObject *parent)
     : QObject(parent), m_updateController(updateController)
 {
     if (m_updateController) {
-        connect(m_updateController, &UpdateController::updateFound, this, &UpdateUiController::updateFound);
+        connect(m_updateController, &UpdateController::updateFound, this, [this]() {
+            m_manualCheck = false;
+            emit updateFound();
+        });
+        // Startup checks stay silent; only a check the user asked for reports back.
+        connect(m_updateController, &UpdateController::noUpdateFound, this, [this]() {
+            if (std::exchange(m_manualCheck, false)) {
+                emit noUpdateFound();
+            }
+        });
+        connect(m_updateController, &UpdateController::updateCheckFailed, this, [this]() {
+            if (std::exchange(m_manualCheck, false)) {
+                emit updateCheckFailed();
+            }
+        });
     }
 }
 
@@ -32,6 +48,10 @@ QString UpdateUiController::getChangelogText() const
     const QString rawChangelog = m_updateController->getRawChangelogText();
     if (rawChangelog.isEmpty()) {
         return tr("Failed to load changelog text");
+    }
+    // Fork release notes (GitHub releases) have no per-OS sections.
+    if (!rawChangelog.contains("### General")) {
+        return rawChangelog;
     }
 
     QStringList lines = rawChangelog.split("\n");
@@ -72,6 +92,7 @@ QString UpdateUiController::getVersion() const
 void UpdateUiController::checkForUpdates()
 {
     if (m_updateController) {
+        m_manualCheck = true;
         m_updateController->checkForUpdates();
     }
 }

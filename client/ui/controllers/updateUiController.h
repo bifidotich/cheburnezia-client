@@ -25,9 +25,14 @@ public slots:
 
 signals:
     void updateFound();
+    // Result of a check started from the UI (checkForUpdates), for feedback
+    // when there is nothing to show in the changelog drawer.
+    void noUpdateFound();
+    void updateCheckFailed();
 
 private:
     UpdateController* m_updateController;
+    bool m_manualCheck = false;
 };
 
 #endif // UPDATEUICONTROLLER_H
