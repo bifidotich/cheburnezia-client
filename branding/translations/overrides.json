@@ -31,8 +31,8 @@
         {
             "context": "PageSettingsAbout",
             "source": "Amnezia is a free and open-source application. You can support the developers if you like it.",
-            "en": "{app} is a free and open-source fork of AmneziaVPN, distributed under the GNU GPLv3. It is not affiliated with the Amnezia team.",
-            "ru_RU": "{app} — бесплатный форк AmneziaVPN с открытым исходным кодом, распространяется по лицензии GNU GPLv3. Не связан с командой Amnezia."
+            "en": "{app} is a free and open-source fork of AmneziaVPN, distributed under the GNU GPLv3.",
+            "ru_RU": "{app} — бесплатный форк AmneziaVPN с открытым исходным кодом, распространяется по лицензии GNU GPLv3."
         },
         {
             "context": "PageSettingsAbout",
