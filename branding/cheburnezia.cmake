@@ -29,7 +29,7 @@ set(CLIENT_ANDROID_PACKAGE  "org.cheburnezia.vpn" CACHE STRING "")
 # fork's own releases are counted here instead. Bump it once per published
 # release: deploy/release_android.sh tags the release as
 # v<upstream version>-ch<CHEBURNEZIA_BUILD> and refuses to reuse a tag.
-set(CHEBURNEZIA_BUILD 2 CACHE STRING "Cheburnezia release number")
+set(CHEBURNEZIA_BUILD 3 CACHE STRING "Cheburnezia release number")
 
 # GitHub repository whose latest release the app checks for updates
 # (ForkUpdateController). Same as REPO in deploy/release_android.sh.
