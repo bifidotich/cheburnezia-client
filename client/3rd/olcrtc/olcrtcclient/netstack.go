@@ -130,6 +130,7 @@ func (ns *netStack) handleTCP(conn adapter.TCPConn) {
 		log.Printf("olcrtc: socks5 connect to %s: %v", dst, err)
 		return
 	}
+	ns.client.markAlive()
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -222,6 +223,7 @@ func (ns *netStack) resolveOverTunnel(dstIP net.IP, dstPort uint16, query []byte
 	if err := socks5Connect(up, dstIP, dstPort); err != nil {
 		return nil, err
 	}
+	ns.client.markAlive()
 
 	framed := binary.BigEndian.AppendUint16(make([]byte, 0, len(query)+2), uint16(len(query)))
 	framed = append(framed, query...)

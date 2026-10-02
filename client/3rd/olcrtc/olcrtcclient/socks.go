@@ -48,6 +48,15 @@ func socksReplyMessage(code byte) string {
 	}
 }
 
+// socksReplyError is a CONNECT the proxy answered with a failure code. olcRTC
+// sends such a reply only once its server has answered, so it also shows that
+// the session is alive.
+type socksReplyError struct{ code byte }
+
+func (e *socksReplyError) Error() string {
+	return "socks5: " + socksReplyMessage(e.code)
+}
+
 // socks5Connect performs a SOCKS5 CONNECT handshake for dst over rw. Only the
 // no-authentication method is offered, matching olcRTC's loopback listener.
 func socks5Connect(rw io.ReadWriter, dstIP net.IP, dstPort uint16) error {
@@ -96,7 +105,7 @@ func socks5Connect(rw io.ReadWriter, dstIP net.IP, dstPort uint16) error {
 		return fmt.Errorf("socks5: unexpected version 0x%02x in reply", head[0])
 	}
 	if head[1] != 0x00 {
-		return fmt.Errorf("socks5: %s", socksReplyMessage(head[1]))
+		return &socksReplyError{code: head[1]}
 	}
 
 	// Drain the bound address so the stream is positioned at the payload.

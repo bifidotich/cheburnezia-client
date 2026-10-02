@@ -13,6 +13,7 @@ package olcrtcclient
 // provider HTTPS and WebSocket sockets on all engines.
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -21,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -110,6 +112,17 @@ type Client struct {
 	netStack  *netStack
 	socksAddr string
 
+	// Watchdog (see watchdog.go).
+	watchCancel context.CancelFunc
+	watchDone   chan struct{}
+	restartReq  chan struct{}
+	// lastAlive is the UnixNano time of the last CONNECT that went through.
+	lastAlive atomic.Int64
+
+	// stateMu guards state, the last state reported to the host.
+	stateMu sync.Mutex
+	state   string
+
 	// downMu guards the throttled "tunnel is down" logging.
 	downMu      sync.Mutex
 	lastDownLog time.Time
@@ -150,7 +163,12 @@ func NewClient(cfg Config, protect ProtectFunc, onState StateFunc) (*Client, err
 	if cfg.TunMtu <= 0 {
 		cfg.TunMtu = 1500
 	}
-	return &Client{cfg: cfg, protect: protect, onState: onState}, nil
+	return &Client{
+		cfg:        cfg,
+		protect:    protect,
+		onState:    onState,
+		restartReq: make(chan struct{}, 1),
+	}, nil
 }
 
 // notifyState reports a state transition, if the host asked to be told.
@@ -182,10 +200,42 @@ func (c *Client) Start() error {
 		return errors.New("olcrtc: client already running")
 	}
 
+	rt, socksAddr, err := c.startRuntime(context.Background())
+	if err != nil {
+		clearProtector()
+		return err
+	}
+
+	ns, err := newNetStack(c.cfg.TunFd, c.cfg.TunMtu, c)
+	if err != nil {
+		rt.Stop(int(stopTimeout / time.Millisecond))
+		clearProtector()
+		return fmt.Errorf("olcrtc: attaching network stack to TUN: %w", err)
+	}
+
+	c.runtime = rt
+	c.netStack = ns
+	c.socksAddr = socksAddr
+	c.running = true
+
+	watchCtx, cancel := context.WithCancel(context.Background())
+	c.watchCancel = cancel
+	c.watchDone = make(chan struct{})
+	go c.watch(watchCtx, c.watchDone)
+
+	log.Printf("olcrtc: tunnel up (provider %s, transport %s, socks %s)",
+		c.cfg.Provider, c.cfg.Transport, socksAddr)
+	c.setState(StateConnected)
+	return nil
+}
+
+// startRuntime starts a new olcRTC runtime on a fresh loopback port and waits
+// until its SOCKS5 listener is up. It returns the runtime and that address.
+func (c *Client) startRuntime(ctx context.Context) (*olcmobile.Runtime, string, error) {
 	const socksHost = "127.0.0.1"
 	port, err := pickLoopbackPort()
 	if err != nil {
-		return fmt.Errorf("olcrtc: reserving socks port: %w", err)
+		return nil, "", fmt.Errorf("olcrtc: reserving socks port: %w", err)
 	}
 	socksAddr := net.JoinHostPort(socksHost, strconv.Itoa(port))
 
@@ -207,31 +257,32 @@ func (c *Client) Start() error {
 	rt.SetProtector(protector{c.protect})
 
 	if err := rt.Start(); err != nil {
-		rt.SetProtector(nil)
-		return fmt.Errorf("olcrtc: starting runtime: %w", err)
+		return nil, "", fmt.Errorf("olcrtc: starting runtime: %w", err)
 	}
-	if err := rt.WaitReady(int(readyTimeout / time.Millisecond)); err != nil {
+	if err := waitRuntimeReady(ctx, rt, readyTimeout); err != nil {
 		rt.Stop(int(stopTimeout / time.Millisecond))
-		rt.SetProtector(nil)
-		return fmt.Errorf("olcrtc: runtime not ready: %w", err)
+		return nil, "", fmt.Errorf("olcrtc: runtime not ready: %w", err)
 	}
+	return rt, socksAddr, nil
+}
 
-	ns, err := newNetStack(c.cfg.TunFd, c.cfg.TunMtu, c)
-	if err != nil {
-		rt.Stop(int(stopTimeout / time.Millisecond))
-		rt.SetProtector(nil)
-		return fmt.Errorf("olcrtc: attaching network stack to TUN: %w", err)
+// waitRuntimeReady is Runtime.WaitReady that also gives up when ctx ends, so
+// Stop does not have to wait out a restart in progress.
+func waitRuntimeReady(ctx context.Context, rt *olcmobile.Runtime, timeout time.Duration) error {
+	const step = time.Second
+	deadline := time.Now().Add(timeout)
+	for {
+		err := rt.WaitReady(int(step / time.Millisecond))
+		if !errors.Is(err, olcmobile.ErrReadyTimeout) {
+			return err
+		}
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		if time.Now().After(deadline) {
+			return err
+		}
 	}
-
-	c.runtime = rt
-	c.netStack = ns
-	c.socksAddr = socksAddr
-	c.running = true
-
-	log.Printf("olcrtc: tunnel up (provider %s, transport %s, socks %s)",
-		c.cfg.Provider, c.cfg.Transport, socksAddr)
-	c.notifyState(StateConnected)
-	return nil
 }
 
 // dialSocks opens a TCP connection to olcRTC's loopback SOCKS5 listener. This
@@ -259,17 +310,30 @@ func isTunnelDown(err error) bool {
 // Stop tears the tunnel down. It is safe to call more than once.
 func (c *Client) Stop() error {
 	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	if !c.running {
 		if c.runtime != nil {
 			c.runtime.Stop(int(stopTimeout / time.Millisecond))
-			c.runtime.SetProtector(nil)
 			c.runtime = nil
+			clearProtector()
 		}
+		c.mu.Unlock()
 		return nil
 	}
 	c.running = false
+	watchCancel, watchDone := c.watchCancel, c.watchDone
+	c.watchCancel, c.watchDone = nil, nil
+	c.mu.Unlock()
+
+	// The watchdog takes c.mu to swap runtimes, so it is waited for unlocked.
+	// With running cleared it cannot start anything new; a restart in flight
+	// ends early on the cancelled context.
+	if watchCancel != nil {
+		watchCancel()
+		<-watchDone
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	if c.netStack != nil {
 		c.netStack.Close()
@@ -279,14 +343,22 @@ func (c *Client) Stop() error {
 		if err := c.runtime.Stop(int(stopTimeout / time.Millisecond)); err != nil {
 			log.Printf("olcrtc: runtime stop: %v", err)
 		}
-		c.runtime.SetProtector(nil)
 		c.runtime = nil
 	}
+	clearProtector()
 	c.socksAddr = ""
 
 	log.Printf("olcrtc: tunnel stopped")
-	c.notifyState(StateDisconnected)
+	c.setState(StateDisconnected)
 	return nil
+}
+
+// clearProtector removes the process-wide socket protector. The mobile package
+// only exposes it as a Runtime method, but the setting is global and the
+// method does not touch the Runtime, so a zero value is enough.
+func clearProtector() {
+	var rt olcmobile.Runtime
+	rt.SetProtector(nil)
 }
 
 // pickLoopbackPort reserves a free loopback TCP port for olcRTC's SOCKS5

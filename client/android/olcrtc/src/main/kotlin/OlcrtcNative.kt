@@ -55,4 +55,11 @@ object OlcrtcNative {
 
     /** Stops the tunnel. Returns null on success, or a failure reason. */
     external fun stopTunnel(): String?
+
+    /**
+     * Asks the running tunnel to rebuild its olcRTC session, keeping the TUN.
+     * Returns immediately; the outcome arrives through [onStateChanged].
+     * Returns false if no tunnel is running.
+     */
+    external fun restartTunnel(): Boolean
 }

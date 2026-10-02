@@ -153,7 +153,12 @@ class Olcrtc : Protocol() {
     }
 
     override fun reconnectVpn(vpnBuilder: Builder, protect: (Int) -> Boolean) {
-        state.value = CONNECTED
+        // The network changed and the WebRTC sockets are bound to the old one.
+        // libolcrtc rebuilds the session on the same TUN and reports
+        // "connected" through stateListener once traffic flows again.
+        if (!isRunning || !OlcrtcNative.restartTunnel()) {
+            Log.w(TAG, "Reconnect requested, but the olcRTC tunnel is not running")
+        }
     }
 
     private fun clearNativeHooks() {

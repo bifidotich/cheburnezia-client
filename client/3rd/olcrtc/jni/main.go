@@ -112,6 +112,18 @@ func Java_org_amnezia_vpn_protocol_olcrtc_OlcrtcNative_stopTunnel(env *C.JNIEnv,
 	return 0
 }
 
+//export Java_org_amnezia_vpn_protocol_olcrtc_OlcrtcNative_restartTunnel
+func Java_org_amnezia_vpn_protocol_olcrtc_OlcrtcNative_restartTunnel(env *C.JNIEnv, thiz C.jobject) C.jboolean {
+	clientMu.Lock()
+	defer clientMu.Unlock()
+
+	if activeClient == nil {
+		return C.JNI_FALSE
+	}
+	activeClient.RequestRestart()
+	return C.JNI_TRUE
+}
+
 func jstringToString(env *C.JNIEnv, jstr C.jstring) string {
 	if jstr == 0 {
 		return ""
