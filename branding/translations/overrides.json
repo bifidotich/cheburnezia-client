@@ -51,6 +51,18 @@
             "all": "{repo_url}"
         },
         {
+            "context": "UpdateSupportDrawer",
+            "source": "If the update won't install, message us",
+            "en": "If the update won't install, download it from GitHub",
+            "ru_RU": "Если обновление не устанавливается, скачайте его с GitHub"
+        },
+        {
+            "context": "PageUpdate",
+            "source": "Download failed. Download manually from amnezia.org",
+            "en": "Download failed. Download manually from GitHub",
+            "ru_RU": "Не удалось скачать. Загрузите вручную с GitHub"
+        },
+        {
             "context": "PageSetupWizardCredentials",
             "source": "All data you enter will remain strictly confidential and will not be shared or disclosed to the Amnezia or any third parties",
             "en": "All data you enter will remain strictly confidential and will not be shared or disclosed to the app developers or any third parties",

@@ -183,7 +183,9 @@ PageType {
                 leftImageSource: "qrc:/images/controls/help-circle.svg"
 
                 onClicked: {
-                    Qt.openUrlExternally(LanguageUiController.getCurrentSiteUrl("starter-guide"))
+                    // Fork: Amnezia's guide without their utm_* tags. Upstream's English URL
+                    // also puts the path after the query; dropping the tags fixes that too.
+                    Qt.openUrlExternally(LanguageUiController.getCurrentSiteUrl("starter-guide").replace(/[?&]utm_[^?&\/]*/g, ""))
                 }
 
                 Keys.onEnterPressed: this.clicked()

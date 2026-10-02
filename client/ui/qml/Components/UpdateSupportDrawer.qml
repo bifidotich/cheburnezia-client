@@ -47,47 +47,20 @@ DrawerType2 {
                 text: qsTr("If the update won't install, message us")
             }
 
+            // Fork: the GitHub releases page replaces Amnezia's Telegram, email and
+            // website. The repository URL is the About page's, which
+            // branding/translations/overrides.json points at the fork.
             LabelWithButtonType {
                 Layout.fillWidth: true
                 Layout.topMargin: 16
 
-                text: qsTr("Telegram")
-                descriptionText: qsTr("We'll reply in chat")
-                leftImageSource: "qrc:/images/controls/telegram.svg"
-                rightImageSource: "qrc:/images/controls/chevron-right.svg"
-
-                clickedFunction: function() {
-                    Qt.openUrlExternally(qsTr("https://t.me/amnezia_vpn_en"))
-                }
-            }
-
-            DividerType {}
-
-            LabelWithButtonType {
-                Layout.fillWidth: true
-
-                text: qsTr("support@amnezia.org")
-                descriptionText: qsTr("Support email")
-                leftImageSource: "qrc:/images/controls/mail.svg"
-                rightImageSource: "qrc:/images/controls/chevron-right.svg"
-
-                clickedFunction: function() {
-                    Qt.openUrlExternally(qsTr("mailto:support@amnezia.org"))
-                }
-            }
-
-            DividerType {}
-
-            LabelWithButtonType {
-                Layout.fillWidth: true
-
-                text: qsTr("amnezia.org")
+                text: qsTranslate("PageSettingsAbout", "GitHub")
                 descriptionText: qsTr("Download the update manually")
-                leftImageSource: "qrc:/images/controls/amnezia.svg"
+                leftImageSource: "qrc:/images/controls/github.svg"
                 rightImageSource: "qrc:/images/controls/chevron-right.svg"
 
                 clickedFunction: function() {
-                    Qt.openUrlExternally(LanguageUiController.getCurrentSiteUrl(""))
+                    Qt.openUrlExternally(qsTranslate("PageSettingsAbout", "https://github.com/amnezia-vpn/amnezia-client") + "/releases")
                 }
             }
         }

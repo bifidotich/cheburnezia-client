@@ -249,7 +249,8 @@ PageType {
                 Layout.alignment: Qt.AlignHCenter
                 implicitHeight: 32
 
-                visible: Qt.platform.os !== "ios" && !IsMacOsNeBuild
+                // Fork: no link to Amnezia's site as if it were this app's.
+                visible: false
 
                 defaultColor: AmneziaStyle.color.transparent
                 hoveredColor: AmneziaStyle.color.translucentWhite

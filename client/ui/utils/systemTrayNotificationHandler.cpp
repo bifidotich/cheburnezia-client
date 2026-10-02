@@ -33,7 +33,8 @@ SystemTrayNotificationHandler::SystemTrayNotificationHandler(QObject* parent) :
     m_menu.addSeparator();
 
     m_trayActionVisitWebSite = m_menu.addAction(QIcon(":/images/tray/link.png"), tr("Visit Website"), [&](){
-        QDesktopServices::openUrl(QUrl(websiteUrl));
+        // Fork: the fork's GitHub repository instead of Amnezia's site (websiteUrl).
+        QDesktopServices::openUrl(QUrl(QStringLiteral("https://github.com/" CHEBURNEZIA_UPDATE_REPO)));
     });
 
     // Quit action: disconnect VPN first on macOS NE, else quit directly
